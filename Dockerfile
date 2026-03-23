@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
 # Set up the shared workspace
 WORKDIR /app
@@ -8,22 +8,12 @@ COPY ./shared ./shared
 WORKDIR /app/backend
 COPY ./backend/package*.json ./
 RUN npm ci --only=production
+
+# Globally install tsx to completely bypass ts-node compilation errors
+RUN npm install -g tsx
+
+# Copy the rest of the backend files
 COPY ./backend ./
 
-# Final runtime image
-FROM node:20-alpine
-WORKDIR /app
-
-# Copy shared logic so TS compiler can find it
-COPY --from=builder /app/shared ./shared
-
-# Copy backend files
-COPY --from=builder /app/backend/node_modules ./backend/node_modules
-COPY --from=builder /app/backend/src ./backend/src
-COPY --from=builder /app/backend/tsconfig.json ./backend/
-
-RUN npm install -g ts-node
-
 EXPOSE 2567
-WORKDIR /app/backend
-CMD ["npx", "ts-node", "--transpile-only", "src/index.ts"]
+CMD ["tsx", "src/index.ts"]

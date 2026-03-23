@@ -18,6 +18,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: Date.now() }));
+app.get('/', (_req, res) => res.send('NOVA CARDS SERVER ONLINE'));
 
 const httpServer = createServer(app);
 const gameServer = new Server({ server: httpServer });

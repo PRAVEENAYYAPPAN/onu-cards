@@ -1,0 +1,11 @@
+{
+  "name": "@nova/shared",
+  "version": "1.0.0",
+  "main": "./src/types/index.ts",
+  "exports": {
+    ".": "./src/types/index.ts",
+    "./engine": "./src/engine/GameEngine.ts",
+    "./rules": "./src/engine/Rules.ts",
+    "./deck": "./src/engine/Deck.ts"
+  }
+}

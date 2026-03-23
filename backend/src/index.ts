@@ -25,6 +25,6 @@ const gameServer = new Server({ server: httpServer });
 // Register game rooms
 gameServer.define('nova_classic', NovaRoom).filterBy(['isPublic']);
 
-gameServer.listen(port).then(() => {
+gameServer.listen(port, "0.0.0.0").then(() => {
   console.log(`🚀 NOVA CARDS server running on ws://localhost:${port}`);
 });

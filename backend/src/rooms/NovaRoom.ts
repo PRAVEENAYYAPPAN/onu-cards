@@ -5,6 +5,21 @@ import { buildClassicDeck, shuffle } from '../../../shared/src/engine/Deck';
 import { isPlayable, resolvePlay, nextIndex, checkWin } from '../../../shared/src/engine/Rules';
 import { botDecide, botDelay } from '../bots/BotPlayer';
 
+function calculateUnoScores(players: Player[]) {
+  const scores = players.map(p => {
+     let score = 0;
+     for (const c of p.hand) {
+        const val = parseInt(c.value);
+        if (!isNaN(val)) score += val;
+        else if (['skip', 'reverse', 'draw2'].includes(c.value)) score += 20;
+        else if (['wild', 'wild4', 'discard_all'].includes(c.value)) score += 50;
+     }
+     return { playerId: p.id, name: p.name, score };
+  });
+  scores.sort((a, b) => a.score - b.score);
+  return scores;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ServerGameState {
@@ -98,16 +113,15 @@ export class NovaRoom extends Room {
       if (this.gs.matchDurationInMinutes > 0 && this.gs.matchStartedAt > 0) {
         const elapsedMinutes = (Date.now() - this.gs.matchStartedAt) / 60000;
         if (elapsedMinutes >= this.gs.matchDurationInMinutes) {
-          // Timer ended! Player with least cards wins
-          let leastCards = Infinity;
-          let winnerId = this.gs.players[0].id;
-          for (const p of this.gs.players) {
-             if (p.hand.length < leastCards) { leastCards = p.hand.length; winnerId = p.id; }
-          }
+          // Timer ended! Calculate UNO points for each player
+          const scores = calculateUnoScores(this.gs.players as any);
+          const winnerId = scores[0].playerId;
+
           this.gs.winnerId = winnerId;
           this.gs.phase = 'ended';
           this.gs.pendingDraw = 0;
-          this.broadcast('GAME_OVER', { winnerId });
+          (this.gs as any).lastMatchScores = scores;
+          this.broadcast('GAME_OVER', { winnerId, scores });
           this.broadcastState();
           return; // Skip rest of watchdog
         }
@@ -272,7 +286,9 @@ export class NovaRoom extends Room {
       this.gs.winnerId = player.id;
       this.gs.phase = 'ended';
       this.gs.pendingDraw = 0;
-      this.broadcast('GAME_OVER', { winnerId: player.id });
+      const scores = calculateUnoScores(this.gs.players as any);
+      (this.gs as any).lastMatchScores = scores;
+      this.broadcast('GAME_OVER', { winnerId: player.id, scores });
       this.broadcastState();
       return;
     }

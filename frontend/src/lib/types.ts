@@ -44,6 +44,7 @@ export interface GameState {
   matchDurationInMinutes: number;
   matchStartedAt: number;
   turnStartedAt: number;
+  lastMatchScores?: { playerId: string; name: string; score: number }[];
 }
 
 export interface RoomOptions {

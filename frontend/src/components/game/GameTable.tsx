@@ -262,7 +262,8 @@ function PlayerSeat({
   name, isBot, isActive, cardCount, isMe,
   timerActive, timerDuration = TURN_DURATION,
   onTimerTick, onTimerTimeout,
-}: PlayerSeatProps) {
+  direction, // Added to orient the arrow
+}: PlayerSeatProps & { direction: 'cw' | 'ccw' }) {
   const seed = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 7;
   const emoji = isBot ? BOT_ICONS[seed] : HUMAN_ICONS[seed];
 
@@ -270,19 +271,21 @@ function PlayerSeat({
     <div className={`uno-seat ${isActive ? 'uno-seat--active' : ''} ${isMe ? 'uno-seat--me' : ''}`}>
       {/* Timer ring wraps avatar */}
       <div style={{ position: 'relative' }}>
-        {/* Animated Circular Turn Indicator mapping smoothly across seats */}
         {isActive && (
           <motion.div
-            layoutId="turn-indicator"
-            transition={{ type: 'spring', stiffness: 100, damping: 20, mass: 0.8 }}
-            style={{
-               position: 'absolute', inset: -8,
-               borderRadius: '50%',
-               border: '4px solid #00d68f',
-               boxShadow: '0 0 20px rgba(0,214,143,0.8), inset 0 0 10px rgba(0,214,143,0.5)',
-               zIndex: 0
-            }}
-          />
+            layoutId="active-turn-indicator"
+            className="uno-turn-indicator-linear"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+          >
+            {/* The arrow points in the current play direction */}
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{
+              transform: `rotate(${direction === 'cw' ? '0' : '180'}deg)`
+            }}>
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </motion.div>
         )}
         {timerActive && (
           <div style={{ position: 'absolute', top: -4, left: -4, zIndex: 5 }}>
@@ -540,7 +543,7 @@ export function GameTable({
       </div>
 
       {/* ── Opponents ──────────────────────────────────────────────────────── */}
-      <div className="uno-opponents">
+      <div className="uno-opponents" style={{ zIndex: 10 }}>
         {others.map(player => (
           <PlayerSeat
             key={player.id} name={player.name} isBot={player.type === 'bot'}
@@ -548,57 +551,56 @@ export function GameTable({
             cardCount={player.handCount} isMe={false}
             timerActive={currentPlayer?.id === player.id && gameState.phase === 'playing'}
             timerDuration={TURN_DURATION}
+            direction={gameState.direction}
           />
         ))}
+      </div>
+
+      {/* ── Side Pending Draw Stack ───────────────────────────────────────── */}
+      <div className="uno-side-stack-area">
+        <div style={{ position: 'relative' }}>
+          <AnimatePresence>
+            {gameState.pendingDraw > 0 && Array.from({ length: Math.min(gameState.pendingDraw, 12) }).map((_, i) => (
+              <motion.div
+                key={`p-stack-${i}`}
+                initial={{ opacity: 0, scale: 0.2, x: 200 }}
+                animate={{ opacity: 1, scale: 1, x: 0, y: -(i * 4), rotate: (i % 3) * 3 }}
+                exit={{ 
+                   opacity: 0, 
+                   y: currentPlayer?.id === myId ? 600 : -600, // Fly to target player
+                   scale: 0.5,
+                   transition: { duration: 0.6, delay: i * 0.05, ease: "anticipate" }
+                }}
+                transition={{ type: 'spring', stiffness: 100, damping: 15, delay: i * 0.05 }}
+                className="uno-pending-card-visual"
+              >
+                <div className="uno-mini-card-back" />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {gameState.pendingDraw > 0 && (
+             <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               className="uno-stack-label"
+             >
+               +{gameState.pendingDraw} PENALTY
+             </motion.div>
+          )}
+        </div>
       </div>
 
       {/* ── Center: Draw + Discard ─────────────────────────────────────────── */}
       <div className="uno-center" style={{ zIndex: 5, position: 'relative' }}>
         
         {/* Draw Pile */}
-        <div style={{ position: 'relative' }}>
+        <div id="deck-root">
            <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
-           
-           {/* Draw Stack Visual (+2 / +4 Stacking displayed explicitly beside draw pile) */}
-           {gameState.pendingDraw > 0 && (
-             <div style={{
-                position: 'absolute', top: '50%', right: '120%', transform: 'translateY(-50%)',
-                display: 'flex', flexDirection: 'column-reverse', gap: '-40px', pointerEvents: 'none'
-             }}>
-               <AnimatePresence>
-                 {Array.from({ length: Math.min(gameState.pendingDraw, 12) }).map((_, i) => (
-                   <motion.div
-                     key={`stack-${i}`}
-                     initial={{ opacity: 0, x: 60, y: -20, scale: 0.5, rotate: 20 }}
-                     animate={{ opacity: 1, x: -(i * 6), y: -(i * 2), scale: 1, rotate: ((i % 3) - 1) * 6 }}
-                     exit={{ opacity: 0, y: currentPlayer?.id === myId ? 400 : -400, x: (Math.random() - 0.5) * 200, scale: 0.5 }}
-                     transition={{ duration: 0.4, delay: i * 0.06, type: 'spring' }}
-                     style={{ position: 'absolute', zIndex: i }}
-                   >
-                     <UnoCard card={{ id: `fake-${i}`, value: '0', color: 'red' } as Card} faceDown />
-                   </motion.div>
-                 ))}
-               </AnimatePresence>
-             </div>
-           )}
         </div>
 
         {/* Discard Pile */}
         <div className="uno-discard">
           {topCard && <UnoCard card={topCard} />}
-          
-          {/* Stack Counter Visual Popup */}
-          {gameState.pendingDraw > 0 && (
-             <div style={{
-                position: 'absolute', top: -24, right: -24,
-                background: 'linear-gradient(135deg, #ff3b5c, #c41e3a)', color: 'white', fontWeight: 900,
-                padding: '6px 14px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(255,59,92,0.6)',
-                animation: 'uno-pulse 0.8s ease-in-out infinite', zIndex: 100, fontSize: '1.2rem',
-                transform: 'rotate(10deg)'
-             }}>
-               +{gameState.pendingDraw} STACK!
-             </div>
-          )}
         </div>
       </div>
 
@@ -612,12 +614,14 @@ export function GameTable({
         </div>
       )}
       {animTrigger?.type === 'draw' && (
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%', zIndex: 999,
-          transform: 'translate(-50%, -50%)',
-          animation: 'opponent-draw-fly 400ms ease-in forwards',
-        }}>
-          <UnoCard card={topCard} faceDown />
+        <div 
+          className={isMyTurn ? "uno-draw-fly-to-hand" : "uno-draw-fly-to-opp"}
+          style={{
+            position: 'absolute', top: '50%', left: '50%', zIndex: 999,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <UnoCard card={{ id: 'anim-draw', value: '0', color: 'red' } as Card} faceDown />
         </div>
       )}
 
@@ -652,6 +656,7 @@ export function GameTable({
                 timerDuration={TURN_DURATION}
                 onTimerTick={handleTimerTick}
                 onTimerTimeout={handleTimerTimeout}
+                direction={gameState.direction}
               />
             )}
           </div>
@@ -724,6 +729,7 @@ export function GameTable({
           winnerId={gameState.winnerId}
           winnerName={gameState.players.find(p => p.id === gameState.winnerId)?.name ?? 'Unknown'}
           isMe={gameState.winnerId === myId}
+          scores={gameState.lastMatchScores}
           onPlayAgain={onPlayAgain} onLeave={onLeave} isHost={isHost}
         />
       )}

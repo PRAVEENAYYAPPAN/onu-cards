@@ -12,6 +12,7 @@ interface AnimationEvent {
   chosenColor?: CardColor;
   count?: number;
   winnerId?: string;
+  scores?: { playerId: string; name: string; score: number }[];
 }
 
 interface GameStore {
@@ -62,7 +63,7 @@ function bindRoomEvents(room: Room, set: (fn: (s: GameStore) => Partial<GameStor
     set(s => ({ animQueue: [...s.animQueue, { type: 'CARD_DRAWN', ...msg }] }));
   });
 
-  room.onMessage('GAME_OVER', (msg: { winnerId: string }) => {
+  room.onMessage('GAME_OVER', (msg: { winnerId: string; scores?: { playerId: string; name: string; score: number }[] }) => {
     set(s => ({ animQueue: [...s.animQueue, { type: 'GAME_OVER', ...msg }] }));
   });
 

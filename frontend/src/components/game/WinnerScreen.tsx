@@ -16,10 +16,11 @@ interface WinnerScreenProps {
   onPlayAgain: () => void;
   onLeave: () => void;
   isHost: boolean;
+  scores?: { playerId: string; name: string; score: number }[];
 }
 
 export function WinnerScreen({
-  winnerId, winnerName, isMe, onPlayAgain, onLeave, isHost
+  winnerId, winnerName, isMe, onPlayAgain, onLeave, isHost, scores
 }: WinnerScreenProps) {
   return (
     <>
@@ -35,63 +36,55 @@ export function WinnerScreen({
             background: 'linear-gradient(145deg, rgba(22,24,40,0.95), rgba(15,17,32,0.98))',
             border: '1px solid rgba(245,200,66,0.3)',
             borderRadius: 32,
-            padding: '48px 56px',
+            padding: '40px',
             textAlign: 'center',
             boxShadow: '0 0 80px rgba(245,200,66,0.15), 0 32px 80px rgba(0,0,0,0.8)',
-            maxWidth: 420,
+            maxWidth: 480,
             width: '90%',
           }}
-          initial={{ scale: 0.6, opacity: 0, y: 40 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
         >
-          {/* Crown */}
-          <motion.div
-            style={{ fontSize: '4rem', marginBottom: 16 }}
-            animate={{ rotate: [-5, 5, -5], y: [0, -8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          >
+          <motion.div style={{ fontSize: '3.5rem', marginBottom: 16 }} animate={{ rotate: [-5, 5, -5] }} transition={{ duration: 2, repeat: Infinity }}>
             👑
           </motion.div>
 
-          {/* Avatar */}
-          <div style={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: 'rgba(245,200,66,0.15)',
-            border: '3px solid rgba(245,200,66,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2.5rem',
-            margin: '0 auto 20px',
-            boxShadow: '0 0 30px rgba(245,200,66,0.3)',
-          }}>
-            {getAvatar(winnerId)}
-          </div>
-
           <h2 className="text-gold" style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>
-            {isMe ? 'You Won!' : `${winnerName} Won!`}
+            {isMe ? 'Victory!' : `${winnerName} Wins!`}
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginBottom: 32 }}>
-            {isMe
-              ? 'Incredible! You cleared your hand first! 🎉'
-              : `${winnerName} played all their cards first.`}
+
+          <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 24 }}>
+            {scores ? 'Match ended by timer. Calculating total hand points...' : 'First player to clear their hand!'}
           </p>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {scores && (
+            <div style={{ marginBottom: 32, background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: '16px' }}>
+              <h3 style={{ fontSize: '0.8rem', opacity: 0.5, textTransform: 'uppercase', marginBottom: 12 }}>Detailed Scores (Lowest Wins)</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {scores.map((s, i) => (
+                  <div key={s.playerId} style={{ 
+                    display: 'flex', justifyContent: 'space-between', padding: '8px 12px',
+                    borderRadius: 8, background: i === 0 ? 'rgba(245,200,66,0.15)' : 'transparent',
+                    border: i === 0 ? '1px solid rgba(245,200,66,0.3)' : 'none'
+                  }}>
+                    <span style={{ fontWeight: i === 0 ? 700 : 400 }}>{s.name} {s.playerId === winnerId ? '🏆' : ''}</span>
+                    <span style={{ fontWeight: 700, color: i === 0 ? '#ffd166' : '#fff' }}>{s.score} pts</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             {isHost && (
-              <button className="nova-btn nova-btn--primary" onClick={onPlayAgain} id="btn-play-again">
-                🔄 Play Again
+              <button className="nova-btn nova-btn--primary" onClick={onPlayAgain}>
+                Play Again
               </button>
             )}
-            <button className="nova-btn nova-btn--ghost" onClick={onLeave} id="btn-leave-game">
-              🚪 Leave
+            <button className="nova-btn nova-btn--ghost" onClick={onLeave}>
+              Leave Room
             </button>
           </div>
-
-          {!isHost && (
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: 16 }}>
-              Waiting for host to start a new game…
-            </p>
-          )}
         </motion.div>
       </motion.div>
     </>

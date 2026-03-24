@@ -43,6 +43,7 @@ export interface GameState {
   matchDurationInMinutes: number; // 3, 5, or 0 (unlimited)
   matchStartedAt: number;        // unix ms for overall match clock
   hostId: string;
+  lastMatchScores?: { playerId: string; name: string; score: number }[];
 }
 
 export interface RoomOptions {
@@ -69,5 +70,5 @@ export type ServerMessage =
   | { type: 'CARD_PLAYED';  playerId: string; card: Card; chosenColor?: CardColor }
   | { type: 'CARD_DRAWN';   playerId: string; count: number }
   | { type: 'TURN_CHANGED'; playerId: string }
-  | { type: 'GAME_OVER';    winnerId: string }
+  | { type: 'GAME_OVER';    winnerId: string; scores?: { playerId: string, name: string, score: number }[] }
   | { type: 'ERROR';        message: string };

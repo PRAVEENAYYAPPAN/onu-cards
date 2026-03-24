@@ -166,15 +166,7 @@ body {
   50% { transform: translate(-50%, -10px); opacity: 1; scale: 1.1; }
 }
 
-.uno-side-stack-area {
-  position: absolute;
-  left: clamp(20px, 8vw, 120px);
-  top: 45%;
-  transform: translateY(-50%);
-  z-index: 15;
-  width: 100px;
-  height: 200px;
-}
+
 
 .uno-pending-card-visual {
   width: clamp(45px, 6vw, 70px);
@@ -205,19 +197,19 @@ body {
 }
 
 .uno-stack-label {
-  position: absolute;
-  top: 130px;
-  left: 10px;
-  white-space: nowrap;
+  pointer-events: none;
   font-weight: 900;
   color: #ff3b5c;
-  font-size: clamp(1rem, 2vw, 1.4rem);
-  text-shadow: 0 0 15px rgba(255,59,92,0.6);
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  text-shadow: 0 0 15px rgba(255, 59, 92, 0.6), 2px 2px 4px rgba(0,0,0,0.5);
   letter-spacing: 0.05em;
-  background: rgba(0,0,0,0.3);
-  padding: 4px 12px;
-  border-radius: 100px;
-  backdrop-filter: blur(4px);
+  background: rgba(15, 17, 32, 0.85);
+  padding: 6px 14px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 59, 92, 0.3);
+  z-index: 1000;
+  white-space: nowrap;
 }
 
 .uno-seat__bot-badge {
@@ -314,10 +306,14 @@ body {
 }
 
 .uno-center {
-  position: absolute; top: 50%; left: 50%;
+  position: fixed;
+  top: 48%; /* Slightly above true center to look better with hands */
+  left: 50%;
   transform: translate(-50%, -50%);
-  display: flex; align-items: center;
-  gap: clamp(20px, 4vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 3vw, 30px);
   z-index: 20;
 }
 

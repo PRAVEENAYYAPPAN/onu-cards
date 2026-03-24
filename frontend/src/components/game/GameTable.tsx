@@ -556,47 +556,50 @@ export function GameTable({
         ))}
       </div>
 
-      {/* ── Side Pending Draw Stack ───────────────────────────────────────── */}
-      <div className="uno-side-stack-area">
-        <div style={{ position: 'relative' }}>
-          <AnimatePresence>
-            {gameState.pendingDraw > 0 && Array.from({ length: Math.min(gameState.pendingDraw, 12) }).map((_, i) => (
-              <motion.div
-                key={`p-stack-${i}`}
-                initial={{ opacity: 0, scale: 0.2, x: 200 }}
-                animate={{ opacity: 1, scale: 1, x: 0, y: -(i * 4), rotate: (i % 3) * 3 }}
-                exit={{ 
-                   opacity: 0, 
-                   y: currentPlayer?.id === myId ? 600 : -600, // Fly to target player
-                   scale: 0.5,
-                   transition: { duration: 0.6, delay: i * 0.05, ease: "anticipate" }
-                }}
-                transition={{ type: 'spring', stiffness: 100, damping: 15, delay: i * 0.05 }}
-                className="uno-pending-card-visual"
-              >
-                <div className="uno-mini-card-back" />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {gameState.pendingDraw > 0 && (
-             <motion.div 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="uno-stack-label"
-             >
-               +{gameState.pendingDraw} PENALTY
-             </motion.div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Center: Draw + Discard ─────────────────────────────────────────── */}
-      <div className="uno-center" style={{ zIndex: 5, position: 'relative' }}>
+      {/* ── Center Cluster: Draw Pile, Pending Stack, Discard Pile ─────────── */}
+      <div className="uno-center">
         
         {/* Draw Pile */}
         <div id="deck-root">
            <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
         </div>
+
+        {/* Pending Draw Stack (Center Cluster) */}
+        <AnimatePresence>
+          {gameState.pendingDraw > 0 && (
+            <div style={{ position: 'relative', width: 40, height: 60 }}>
+               {Array.from({ length: Math.min(gameState.pendingDraw, 10) }).map((_, i) => (
+                  <motion.div
+                    key={`center-stack-${i}`}
+                    initial={{ opacity: 0, scale: 0.2, x: 100 }}
+                    animate={{ opacity: 1, scale: 1, x: i * 2, y: -(i * 1), rotate: (i % 3) * 2 }}
+                    exit={{ 
+                       opacity: 0, 
+                       y: currentPlayer?.id === myId ? 600 : -600,
+                       scale: 0.5,
+                       transition: { duration: 0.5, delay: i * 0.05 }
+                    }}
+                    transition={{ type: 'spring', damping: 10, stiffness: 100, delay: i * 0.04 }}
+                    className="uno-pending-card-visual"
+                    style={{ position: 'absolute', width: 45, height: 65 }}
+                  >
+                    <div className="uno-mini-card-back" />
+                  </motion.div>
+                ))}
+                <motion.div 
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="uno-stack-label"
+                   style={{ 
+                      position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)', 
+                      whiteSpace: 'nowrap', fontSize: '0.9rem', padding: '2px 8px' 
+                   }}
+                 >
+                   +{gameState.pendingDraw} PENALTY
+                 </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Discard Pile */}
         <div className="uno-discard">

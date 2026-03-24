@@ -118,10 +118,10 @@ const sounds: Record<SoundType, () => void> = {
     });
   },
   unoCall: () => {
-    // UNO! voice-like
-    playTone(440, 0.15, 'square', 0.12);
-    setTimeout(() => playTone(660, 0.15, 'square', 0.12), 120);
-    setTimeout(() => playTone(880, 0.25, 'square', 0.15), 240);
+    // Play the actual UNO shout sound effect
+    const audio = new Audio('/sounds/uno-call.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.warn('Audio play failed:', e));
   },
   tick: () => {
     playTone(1000, 0.03, 'square', 0.06);

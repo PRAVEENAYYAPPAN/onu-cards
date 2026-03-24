@@ -50,7 +50,7 @@ interface UnoCardProps {
   animate?: string | null;
 }
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function UnoCard({ card, playable = false, faceDown = false, onClick, isDragging, animate }: UnoCardProps) {
   const label = SYMBOLS[card.value] ?? card.value;
@@ -163,6 +163,61 @@ function UnoCard({ card, playable = false, faceDown = false, onClick, isDragging
   );
 }
 
+// ─── Floating Background Cards ────────────────────────────────────────────────
+function FloatingCards() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    let animId: number;
+    let width = 0, height = 0;
+    const colors = ['rgba(255,77,109,0.1)', 'rgba(76,201,240,0.1)', 'rgba(6,214,160,0.1)', 'rgba(255,209,102,0.1)', 'rgba(124,109,255,0.1)'];
+    interface FloatingCard { x: number; y: number; vx: number; vy: number; rot: number; vr: number; scale: number; color: string; }
+    let cards: FloatingCard[] = [];
+
+    const resize = () => {
+      width = window.innerWidth; height = window.innerHeight;
+      canvas.width = width; canvas.height = height;
+      if (cards.length === 0) {
+        cards = Array.from({ length: 15 }).map(() => ({
+          x: Math.random() * width, y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+          rot: Math.random() * 360, vr: (Math.random() - 0.5) * 0.5,
+          scale: Math.random() * 0.5 + 0.3,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        }));
+      }
+    };
+
+    const frame = () => {
+      ctx.clearRect(0, 0, width, height);
+      for (const c of cards) {
+        c.x += c.vx; c.y += c.vy; c.rot += c.vr;
+        if (c.x < -100) c.x = width + 100; if (c.x > width + 100) c.x = -100;
+        if (c.y < -100) c.y = height + 100; if (c.y > height + 100) c.y = -100;
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot * Math.PI / 180);
+        ctx.scale(c.scale, c.scale);
+        ctx.fillStyle = c.color;
+        ctx.beginPath(); ctx.roundRect(-40, -60, 80, 120, 8); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 30, 50, -25 * Math.PI / 180, 0, 2 * Math.PI); ctx.fill();
+        ctx.restore();
+      }
+      animId = requestAnimationFrame(frame);
+    };
+
+    resize(); frame();
+    window.addEventListener('resize', resize);
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
+  }, []);
+
+  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }} />;
+}
+
 // ─── Draw Pile ────────────────────────────────────────────────────────────────
 
 function DrawPile({ count, onClick }: { count: number; onClick?: () => void }) {
@@ -215,13 +270,19 @@ function PlayerSeat({
     <div className={`uno-seat ${isActive ? 'uno-seat--active' : ''} ${isMe ? 'uno-seat--me' : ''}`}>
       {/* Timer ring wraps avatar */}
       <div style={{ position: 'relative' }}>
-        {/* Animated Turn Arrow pointing at avatar */}
+        {/* Animated Circular Turn Indicator mapping smoothly across seats */}
         {isActive && (
-          <div className="uno-turn-arrow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M19 12l-7 7-7-7"/>
-            </svg>
-          </div>
+          <motion.div
+            layoutId="turn-indicator"
+            transition={{ type: 'spring', stiffness: 100, damping: 20, mass: 0.8 }}
+            style={{
+               position: 'absolute', inset: -8,
+               borderRadius: '50%',
+               border: '4px solid #00d68f',
+               boxShadow: '0 0 20px rgba(0,214,143,0.8), inset 0 0 10px rgba(0,214,143,0.5)',
+               zIndex: 0
+            }}
+          />
         )}
         {timerActive && (
           <div style={{ position: 'absolute', top: -4, left: -4, zIndex: 5 }}>
@@ -451,9 +512,11 @@ export function GameTable({
 
   return (
     <div className="uno-table">
+      {/* ── Background Animations ──────────────────────────────────────────── */}
+      <FloatingCards />
 
       {/* ── HUD ────────────────────────────────────────────────────────────── */}
-      <div className="uno-hud">
+      <div className="uno-hud" style={{ zIndex: 2 }}>
         <span className="uno-hud__label">ROOM</span>
         <span className="uno-hud__code">{gameState.roomCode}</span>
         <div className="uno-hud__sep" />
@@ -490,12 +553,41 @@ export function GameTable({
       </div>
 
       {/* ── Center: Draw + Discard ─────────────────────────────────────────── */}
-      <div className="uno-center">
-        <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
+      <div className="uno-center" style={{ zIndex: 5, position: 'relative' }}>
+        
+        {/* Draw Pile */}
+        <div style={{ position: 'relative' }}>
+           <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
+           
+           {/* Draw Stack Visual (+2 / +4 Stacking displayed explicitly beside draw pile) */}
+           {gameState.pendingDraw > 0 && (
+             <div style={{
+                position: 'absolute', top: '50%', right: '120%', transform: 'translateY(-50%)',
+                display: 'flex', flexDirection: 'column-reverse', gap: '-40px', pointerEvents: 'none'
+             }}>
+               <AnimatePresence>
+                 {Array.from({ length: Math.min(gameState.pendingDraw, 12) }).map((_, i) => (
+                   <motion.div
+                     key={`stack-${i}`}
+                     initial={{ opacity: 0, x: 60, y: -20, scale: 0.5, rotate: 20 }}
+                     animate={{ opacity: 1, x: -(i * 6), y: -(i * 2), scale: 1, rotate: ((i % 3) - 1) * 6 }}
+                     exit={{ opacity: 0, y: currentPlayer?.id === myId ? 400 : -400, x: (Math.random() - 0.5) * 200, scale: 0.5 }}
+                     transition={{ duration: 0.4, delay: i * 0.06, type: 'spring' }}
+                     style={{ position: 'absolute', zIndex: i }}
+                   >
+                     <UnoCard card={{ id: `fake-${i}`, value: '0', color: 'red' } as Card} faceDown />
+                   </motion.div>
+                 ))}
+               </AnimatePresence>
+             </div>
+           )}
+        </div>
+
+        {/* Discard Pile */}
         <div className="uno-discard">
           {topCard && <UnoCard card={topCard} />}
           
-          {/* Stack Counter Visual UI */}
+          {/* Stack Counter Visual Popup */}
           {gameState.pendingDraw > 0 && (
              <div style={{
                 position: 'absolute', top: -24, right: -24,

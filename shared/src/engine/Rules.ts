@@ -6,15 +6,23 @@ export function isPlayable(card: Card, state: GameState): boolean {
   const top = state.discardPile[state.discardPile.length - 1];
   if (!top) return true;
 
-  // Wilds are always playable (unless stacking +2 rule applies)
-  if (card.color === 'wild') return true;
-
-  // Stacking rule: if pendingDraw > 0, can only play draw2 on draw2
+  // Stacking rule handling
   if (state.pendingDraw > 0) {
-    return card.value === 'draw2' || card.value === 'wild4';
+    if (state.activeStackType === 'wild4') {
+      return card.value === 'wild4'; // Only +4 can be played on +4
+    }
+    if (state.activeStackType === 'draw2') {
+      return card.value === 'draw2' || card.value === 'wild4'; // Both +2 and +4 can stack on +2
+    }
+    return false; // If there's a pending draw, no other card is playable
   }
 
-  // Match active color or card value
+  // Normal rule: Wilds always playable
+  if (card.color === 'wild') return true;
+
+  // Match active color, exactly for 'discard_all' or any match
+  if (card.value === 'discard_all') return card.color === state.currentColor;
+
   return card.color === state.currentColor || card.value === top.value;
 }
 
@@ -26,38 +34,47 @@ export function hasPlayableCard(hand: Card[], state: GameState): boolean {
 /** Result of playing a card */
 export interface PlayResult {
   draw: number;       // cards next player must draw (from stacking)
-  skipNext: boolean;  // next player skips
+  skipNext: boolean;  // next player skips (standard skip)
   reversal: boolean;  // direction reverses
   newColor: CardColor;// active color after play
+  activeStackType: 'draw2' | 'wild4' | null;
 }
 
-export function resolvePlay(card: Card, chosenColor: CardColor | undefined, state: GameState): PlayResult {
+export function resolvePlay(card: Card, chosenColor: CardColor | undefined, state: GameState, numPlayers: number): PlayResult {
   let draw = 0;
   let skipNext = false;
   let reversal = false;
   let newColor: CardColor = card.color !== 'wild' ? card.color : (chosenColor ?? 'red');
+  let activeStackType: 'draw2' | 'wild4' | null = state.activeStackType;
 
   switch (card.value) {
     case 'draw2':
       draw = state.pendingDraw + 2;
-      skipNext = true;
+      skipNext = false; // We do not skip! The next player gets a chance to stack!
+      activeStackType = 'draw2';
       break;
     case 'wild4':
       draw = state.pendingDraw + 4;
-      skipNext = true;
+      skipNext = false; // Next player can stack +4
+      activeStackType = 'wild4';
       break;
     case 'skip':
       skipNext = true;
       break;
     case 'reverse':
       reversal = true;
+      if (numPlayers === 2) {
+         skipNext = true; // Reverse behaves like Skip for 2 players
+      }
+      break;
+    case 'discard_all':
+      // Handled outside for discarding logic
       break;
     case 'wild':
-      // color already resolved above
       break;
   }
 
-  return { draw, skipNext, reversal, newColor };
+  return { draw, skipNext, reversal, newColor, activeStackType };
 }
 
 /** Given current index and direction, find next player index */

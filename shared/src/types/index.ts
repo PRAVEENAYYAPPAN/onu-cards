@@ -3,7 +3,7 @@
 export type CardColor = 'red' | 'blue' | 'green' | 'yellow' | 'wild';
 export type CardValue =
   | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-  | 'skip' | 'reverse' | 'draw2'
+  | 'skip' | 'reverse' | 'draw2' | 'discard_all'
   | 'wild' | 'wild4';
 
 export interface Card {
@@ -36,9 +36,12 @@ export interface GameState {
   drawPileCount: number;
   currentColor: CardColor;       // active color (from wild)
   pendingDraw: number;           // accumulated +2/+4
+  activeStackType: 'draw2' | 'wild4' | null; // Tracks stacking rules restriction
   phase: 'lobby' | 'dealing' | 'playing' | 'ended';
   winnerId: string | null;
   turnStartedAt: number;         // unix ms for turn timer
+  matchDurationInMinutes: number; // 3, 5, or 0 (unlimited)
+  matchStartedAt: number;        // unix ms for overall match clock
   hostId: string;
 }
 
@@ -48,6 +51,7 @@ export interface RoomOptions {
   botCount: number;
   isPublic: boolean;
   roomCode?: string;
+  matchDuration?: number;       // In minutes (3, 5, 0 = unlimited)
 }
 
 // ─── Messages Client → Server ─────────────────────────────────────────────────

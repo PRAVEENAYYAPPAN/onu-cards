@@ -4,7 +4,7 @@
 export type CardColor = 'red' | 'blue' | 'green' | 'yellow' | 'wild';
 export type CardValue =
   | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-  | 'skip' | 'reverse' | 'draw2'
+  | 'skip' | 'reverse' | 'draw2' | 'discard_all'
   | 'wild' | 'wild4';
 
 export interface Card {
@@ -37,9 +37,13 @@ export interface GameState {
   drawPileCount: number;
   currentColor: CardColor;
   pendingDraw: number;
+  activeStackType: 'draw2' | 'wild4' | null;
   phase: 'lobby' | 'dealing' | 'playing' | 'ended';
   winnerId: string | null;
   hostId: string;
+  matchDurationInMinutes: number;
+  matchStartedAt: number;
+  turnStartedAt: number;
 }
 
 export interface RoomOptions {
@@ -48,4 +52,5 @@ export interface RoomOptions {
   botCount: number;
   isPublic: boolean;
   name?: string;
+  matchDuration?: number;
 }

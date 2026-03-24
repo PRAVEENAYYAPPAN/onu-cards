@@ -14,13 +14,21 @@ const TURN_DURATION = 10; // seconds
 function isPlayable(card: Card, state: GameState): boolean {
   const top = state.discardPile[state.discardPile.length - 1];
   if (!top) return true;
+
+  if (state.pendingDraw > 0) {
+    if (state.activeStackType === 'wild4') return card.value === 'wild4';
+    if (state.activeStackType === 'draw2') return card.value === 'draw2' || card.value === 'wild4';
+    return false;
+  }
+
   if (card.color === 'wild') return true;
-  if (state.pendingDraw > 0) return card.value === 'draw2' || card.value === 'wild4';
+  if (card.value === 'discard_all') return card.color === state.currentColor;
+
   return card.color === state.currentColor || card.value === top.value;
 }
 
 const SYMBOLS: Record<string, string> = {
-  skip: '⊘', reverse: '↺', draw2: '+2', wild: '★', wild4: '+4',
+  skip: '⊘', reverse: '↺', draw2: '+2', wild: '★', wild4: '+4', discard_all: '✹',
 };
 
 const EXACT_UNO_COLORS: Record<string, string> = {
@@ -42,16 +50,19 @@ interface OnuCardProps {
   animate?: string | null;
 }
 
+import { motion } from 'framer-motion';
+
 function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging, animate }: OnuCardProps) {
   const label = SYMBOLS[card.value] ?? card.value;
   const bgColor = faceDown ? '#1a1a2e' : (EXACT_UNO_COLORS[card.color] ?? '#111');
   const glow = faceDown ? '#000' : (EXACT_UNO_COLORS[card.color] ?? '#fff');
   const isWild = card.color === 'wild';
-  const isAction = ['skip', 'reverse', 'draw2', 'wild', 'wild4'].includes(card.value);
+  const isAction = ['skip', 'reverse', 'draw2', 'wild', 'wild4', 'discard_all'].includes(card.value);
 
-  // Exact UNO template style
+  // Exact UNO template style with Framer Motion layout support
   return (
-    <div
+    <motion.div
+      layoutId={`card-${card.id}`}
       className="onu-card"
       onClick={onClick}
       data-playable={playable || undefined}
@@ -72,8 +83,10 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
         userSelect: 'none',
         overflow: 'hidden',
         flexShrink: 0,
-        transition: 'transform 200ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 200ms ease',
+        x: 0, y: 0,
       } as React.CSSProperties}
+      whileHover={playable ? { y: -24, scale: 1.1, rotate: Math.random() * 4 - 2 } : {}}
+      whileTap={playable ? { scale: 0.95 } : {}}
     >
       <div style={{
         position: 'relative',
@@ -94,7 +107,7 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
               boxShadow: 'inset 0 0 4px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.4)',
             }} />
             
-            {/* Left/Right inner swoosh for wild cards */}
+            {/* Inner swoosh for wild cards */}
             {isWild && (
               <div style={{
                 position: 'absolute', inset: '15%',
@@ -146,7 +159,7 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -408,6 +421,26 @@ export function GameTable({
     onSayNova();
   }, [onSayNova, playSound]);
 
+  // ── Match Timer ───────────────────────────────────────────────────────────
+  const [matchTimeLeft, setMatchTimeLeft] = useState<string>('');
+  useEffect(() => {
+    if (!gameState.matchDurationInMinutes || !gameState.matchStartedAt) return;
+    const endMs = gameState.matchStartedAt + gameState.matchDurationInMinutes * 60000;
+    
+    const interval = setInterval(() => {
+      const remain = Math.max(0, endMs - Date.now());
+      if (remain === 0) {
+        setMatchTimeLeft('00:00');
+        clearInterval(interval);
+      } else {
+        const m = Math.floor(remain / 60000);
+        const s = Math.floor((remain % 60000) / 1000);
+        setMatchTimeLeft(`${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [gameState.matchDurationInMinutes, gameState.matchStartedAt]);
+
   return (
     <div className="onu-table">
 
@@ -426,6 +459,12 @@ export function GameTable({
         </div>
         {gameState.pendingDraw > 0 && (
           <span style={{ color: '#ff3b5c', fontWeight: 800 }}>+{gameState.pendingDraw}💥</span>
+        )}
+        {matchTimeLeft && (
+          <>
+            <div className="onu-hud__sep" />
+            <span style={{ color: '#ffd166', fontWeight: 800 }}>⏱ {matchTimeLeft}</span>
+          </>
         )}
       </div>
 
@@ -447,6 +486,19 @@ export function GameTable({
         <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
         <div className="onu-discard">
           {topCard && <OnuCard card={topCard} />}
+          
+          {/* Stack Counter Visual UI */}
+          {gameState.pendingDraw > 0 && (
+             <div style={{
+                position: 'absolute', top: -24, right: -24,
+                background: 'linear-gradient(135deg, #ff3b5c, #c41e3a)', color: 'white', fontWeight: 900,
+                padding: '6px 14px', borderRadius: '100px', boxShadow: '0 8px 24px rgba(255,59,92,0.6)',
+                animation: 'uno-pulse 0.8s ease-in-out infinite', zIndex: 100, fontSize: '1.2rem',
+                transform: 'rotate(10deg)'
+             }}>
+               +{gameState.pendingDraw} STACK!
+             </div>
+          )}
         </div>
       </div>
 

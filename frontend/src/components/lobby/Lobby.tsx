@@ -126,13 +126,14 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
   const [totalPlayers, setTotalPlayers] = useState(5);
   const [botCount, setBotCount] = useState(4);
   const [isPublic, setIsPublic] = useState(false);
+  const [matchDuration, setMatchDuration] = useState<number>(0);
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState<string | null>(null);
 
   const humanCount = totalPlayers - botCount;
 
   const handleCreate = async () => {
-    await onCreate({ mode: 'classic', maxPlayers: totalPlayers, botCount, isPublic });
+    await onCreate({ mode: 'classic', maxPlayers: totalPlayers, botCount, isPublic, matchDuration });
   };
 
   const handleJoin = async () => {
@@ -241,8 +242,26 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
                 />
               </div>
 
+              {/* Match Timer */}
+              <div className="onu-lobby__field" style={{ marginTop: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <label className="onu-label">MATCH TIMER</label>
+                  <span className="onu-value">{matchDuration === 0 ? 'Unlimited' : `${matchDuration} min`}</span>
+                </div>
+                <select
+                  className="nova-input"
+                  value={matchDuration}
+                  onChange={e => setMatchDuration(Number(e.target.value))}
+                  style={{ width: '100%', opacity: 0.9, backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white' }}
+                >
+                  <option value={0} style={{ color: 'black' }}>Unlimited</option>
+                  <option value={3} style={{ color: 'black' }}>3 Minutes</option>
+                  <option value={5} style={{ color: 'black' }}>5 Minutes</option>
+                </select>
+              </div>
+
               {/* Public toggle */}
-              <div className="onu-lobby__toggle">
+              <div className="onu-lobby__toggle" style={{ marginTop: 16 }}>
                 <label className="onu-label">PUBLIC ROOM</label>
                 <button
                   onClick={() => setIsPublic(!isPublic)}

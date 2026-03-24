@@ -17,6 +17,8 @@ export function buildClassicDeck(): Card[] {
   for (const color of COLORS) {
     // One 0 per color
     deck.push({ id: uid(), color, value: '0' });
+    // One discard_all per color
+    deck.push({ id: uid(), color, value: 'discard_all' });
     // Two of each 1–9 and specials
     for (const value of [...NUMBERS.slice(1), ...SPECIALS]) {
       deck.push({ id: uid(), color, value });
@@ -46,6 +48,7 @@ export function shuffle<T>(arr: T[]): T[] {
 export function cardScore(card: Card): number {
   if (card.value === 'wild4') return 50;
   if (card.value === 'wild') return 40;
+  if (card.value === 'discard_all') return 30;
   if (['skip', 'reverse', 'draw2'].includes(card.value)) return 20;
   return parseInt(card.value, 10);
 }

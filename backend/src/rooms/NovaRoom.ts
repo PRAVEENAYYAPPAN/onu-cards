@@ -17,10 +17,14 @@ interface ServerGameState {
   discardPile: Card[];
   currentColor: CardColor;
   pendingDraw: number;
+  activeStackType: 'draw2' | 'wild4' | null;
   phase: 'lobby' | 'dealing' | 'playing' | 'ended';
   winnerId: string | null;
   hostId: string;
   isPublic: boolean;
+  turnStartedAt: number;
+  matchDurationInMinutes: number;
+  matchStartedAt: number;
 }
 
 const BOT_NAMES = ['Aria', 'Blaze', 'Cipher', 'Dusk', 'Echo', 'Flux', 'Ghost'];
@@ -50,10 +54,14 @@ export class NovaRoom extends Room {
       discardPile: [],
       currentColor: 'red',
       pendingDraw: 0,
+      activeStackType: null,
       phase: 'lobby',
       winnerId: null,
       hostId: '',
       isPublic: options.isPublic ?? false,
+      turnStartedAt: Date.now(),
+      matchDurationInMinutes: options.matchDuration ?? 0,
+      matchStartedAt: 0,
     };
 
     const maxPlayers = options.maxPlayers ?? 5;
@@ -82,9 +90,29 @@ export class NovaRoom extends Room {
       try { this.handlePlayAgain(client); } catch (e) { console.error('PLAY_AGAIN error:', e); }
     });
 
-    // Watchdog: re-trigger stuck bot every 4s
+    // Watchdog: match timer check and re-trigger stuck bot every 4s
     this.watchdog = setInterval(() => {
       if (this.gs.phase !== 'playing') return;
+
+      // Check Match Timer
+      if (this.gs.matchDurationInMinutes > 0 && this.gs.matchStartedAt > 0) {
+        const elapsedMinutes = (Date.now() - this.gs.matchStartedAt) / 60000;
+        if (elapsedMinutes >= this.gs.matchDurationInMinutes) {
+          // Timer ended! Player with least cards wins
+          let leastCards = Infinity;
+          let winnerId = this.gs.players[0].id;
+          for (const p of this.gs.players) {
+             if (p.hand.length < leastCards) { leastCards = p.hand.length; winnerId = p.id; }
+          }
+          this.gs.winnerId = winnerId;
+          this.gs.phase = 'ended';
+          this.gs.pendingDraw = 0;
+          this.broadcast('GAME_OVER', { winnerId });
+          this.broadcastState();
+          return; // Skip rest of watchdog
+        }
+      }
+
       const current = this.gs.players[this.gs.currentPlayerIndex];
       if (!current) return;
       if ((current.type === 'bot' || !current.connected) && !this.botTimers.has(current.id)) {
@@ -186,6 +214,9 @@ export class NovaRoom extends Room {
     this.gs.currentPlayerIndex = 0;
     this.gs.direction = 'cw';
     this.gs.pendingDraw = 0;
+    this.gs.activeStackType = null;
+    this.gs.matchStartedAt = Date.now();
+    this.gs.turnStartedAt = Date.now();
     this.gs.phase = 'playing';
 
     this.broadcastState();
@@ -214,11 +245,22 @@ export class NovaRoom extends Room {
 
     // Now remove the card from player hand
     player.hand.splice(player.hand.findIndex(c => c.id === card.id), 1);
+
+    // Discard All logic
+    if (card.value === 'discard_all') {
+      const remainingHand = player.hand.filter(c => c.color !== card.color);
+      const discarded = player.hand.filter(c => c.color === card.color);
+      player.hand = remainingHand;
+      this.gs.discardPile.push(...discarded);
+    }
+
     player.handCount = player.hand.length;
     this.gs.discardPile.push(card);
 
-    const result = resolvePlay(card, msg.chosenColor, this.gs as any);
+    const result = resolvePlay(card, msg.chosenColor, this.gs as any, this.gs.players.length);
     this.gs.currentColor = result.newColor;
+    this.gs.activeStackType = result.activeStackType;
+    this.gs.turnStartedAt = Date.now();
 
     if (result.reversal) {
       this.gs.direction = this.gs.direction === 'cw' ? 'ccw' : 'cw';
@@ -273,11 +315,30 @@ export class NovaRoom extends Room {
 
     if (this.actionTimer) { clearTimeout(this.actionTimer); this.actionTimer = undefined; }
 
-    const drawCount = this.gs.pendingDraw > 0 ? this.gs.pendingDraw : 1;
-    this.gs.pendingDraw = 0;
-    this.forceDraw(player, drawCount);
-    this.broadcast('CARD_DRAWN', { playerId: player.id, count: drawCount });
+    if (this.gs.pendingDraw > 0) {
+      const drawCount = this.gs.pendingDraw;
+      this.gs.pendingDraw = 0;
+      this.gs.activeStackType = null;
+      this.forceDraw(player, drawCount);
+      this.broadcast('CARD_DRAWN', { playerId: player.id, count: drawCount });
+    } else {
+      // Normal single draw logic (Auto-play)
+      if (this.gs.drawPile.length === 0) this.reshuffleDeck();
+      const card = this.gs.drawPile.pop();
+      if (card) {
+        player.hand.push(card);
+        player.handCount = player.hand.length;
+        this.broadcast('CARD_DRAWN', { playerId: player.id, count: 1 });
 
+        if (isPlayable(card, this.gs as any)) {
+          const chosenColor = card.color === 'wild' ? 'red' : undefined;
+          this.handlePlayCard({ sessionId: player.id } as Client, { cardId: card.id, chosenColor });
+          return; // `handlePlayCard` advances turn and schedules next
+        }
+      }
+    }
+
+    this.gs.turnStartedAt = Date.now();
     this.gs.currentPlayerIndex = nextIndex(
       this.gs.currentPlayerIndex, this.gs.players.length, this.gs.direction
     );
@@ -413,9 +474,13 @@ export class NovaRoom extends Room {
       direction: this.gs.direction,
       currentColor: this.gs.currentColor,
       pendingDraw: this.gs.pendingDraw,
+      activeStackType: this.gs.activeStackType,
       winnerId: this.gs.winnerId,
       hostId: this.gs.hostId,
       isPublic: this.gs.isPublic,
+      turnStartedAt: this.gs.turnStartedAt,
+      matchDurationInMinutes: this.gs.matchDurationInMinutes,
+      matchStartedAt: this.gs.matchStartedAt,
       drawPileCount: this.gs.drawPile.length,
       discardPile: this.gs.discardPile.slice(-3),
       players: this.gs.players.map(p => ({

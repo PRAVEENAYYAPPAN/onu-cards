@@ -1,4 +1,4 @@
-/* ─── ONU Cards – Global Design System ─────────────────────────────────────── */
+/* ─── UNO – Global Design System ─────────────────────────────────────── */
 @import "tailwindcss/preflight" layer(base);
 @import "tailwindcss/utilities" layer(utilities);
 
@@ -66,15 +66,15 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   ONU CARD COMPONENT
+   UNO CARD COMPONENT
    ═══════════════════════════════════════════════════════════════════════════════ */
-.onu-card {
+.uno-card {
   width: var(--card-w);
   height: var(--card-h);
   flex-shrink: 0;
 }
 
-.onu-card__corner {
+.uno-card__corner {
   position: absolute;
   font-family: var(--font-space), 'Space Grotesk', sans-serif;
   font-weight: 900;
@@ -85,7 +85,7 @@ body {
   pointer-events: none;
 }
 
-.onu-card[data-playable]:hover {
+.uno-card[data-playable]:hover {
   transform: translateY(-16px) scale(1.08) !important;
   z-index: 50 !important;
 }
@@ -95,16 +95,16 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════════
    DRAW PILE
    ═══════════════════════════════════════════════════════════════════════════════ */
-.onu-draw-pile {
+.uno-draw-pile {
   position: relative;
   width: var(--card-w);
   height: var(--card-h);
   transition: transform 150ms var(--ease-spring);
 }
-.onu-draw-pile:hover { transform: scale(1.05) rotate(3deg); }
-.onu-draw-pile:active { transform: scale(0.97); }
+.uno-draw-pile:hover { transform: scale(1.05) rotate(3deg); }
+.uno-draw-pile:active { transform: scale(0.97); }
 
-.onu-draw-pile__layer {
+.uno-draw-pile__layer {
   position: absolute;
   width: var(--card-w);
   height: var(--card-h);
@@ -115,7 +115,7 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 
-.onu-draw-pile__badge {
+.uno-draw-pile__badge {
   position: absolute;
   bottom: -22px; left: 50%; transform: translateX(-50%);
   background: rgba(124,109,255,0.2);
@@ -128,12 +128,12 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════════
    PLAYER SEAT
    ═══════════════════════════════════════════════════════════════════════════════ */
-.onu-seat {
+.uno-seat {
   display: flex; flex-direction: column; align-items: center;
   gap: 3px; min-width: 60px;
 }
 
-.onu-seat__avatar {
+.uno-seat__avatar {
   width: 52px; height: 52px; border-radius: 50%;
   background: rgba(255,255,255,0.06);
   border: 2px solid rgba(255,255,255,0.1);
@@ -143,10 +143,22 @@ body {
   position: relative;
 }
 
-.onu-seat--active .onu-seat__avatar {
+.uno-seat--active .uno-seat__avatar {
   border-color: var(--nova-accent);
   box-shadow: 0 0 0 3px var(--nova-accent-glow), 0 0 20px rgba(124,109,255,0.6);
   animation: seat-glow 1.5s ease-in-out infinite;
+}
+
+.uno-turn-arrow {
+  position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+  color: #00d68f; pointer-events: none;
+  animation: turn-arrow-bounce 1s ease-in-out infinite; z-index: 20;
+  filter: drop-shadow(0 0 6px rgba(0,214,143,0.8));
+}
+
+@keyframes turn-arrow-bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 6px); }
 }
 
 @keyframes seat-glow {
@@ -154,31 +166,31 @@ body {
   50% { box-shadow: 0 0 0 6px var(--nova-accent-glow), 0 0 40px rgba(124,109,255,0.7); }
 }
 
-.onu-seat__bot-badge {
+.uno-seat__bot-badge {
   position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
   background: #4f3ff0; border-radius: 4px;
   padding: 1px 5px; font-size: 0.45rem;
   font-weight: 800; color: white;
 }
 
-.onu-seat__name {
+.uno-seat__name {
   font-size: 0.68rem; color: rgba(255,255,255,0.6);
   font-weight: 600; white-space: nowrap;
 }
-.onu-seat--me .onu-seat__name { color: #a79eff; font-weight: 700; }
+.uno-seat--me .uno-seat__name { color: #a79eff; font-weight: 700; }
 
-.onu-seat__count {
+.uno-seat__count {
   font-size: 0.85rem; color: #ffffff; font-weight: 800;
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
   margin-top: 2px;
 }
 
-.onu-seat__cards {
+.uno-seat__cards {
   display: flex; margin-top: 6px; position: relative;
   justify-content: center; width: 100%;
 }
 
-.onu-seat__mini-card {
+.uno-seat__mini-card {
   width: clamp(20px, 4vw, 24px); height: clamp(30px, 6vw, 36px);
   border-radius: 4px;
   background: #ff2828; /* UNO Red Back */
@@ -186,8 +198,8 @@ body {
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
   position: relative;
 }
-.onu-seat__mini-card::after {
-  content: 'ONU';
+.uno-seat__mini-card::after {
+  content: 'UNO';
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.35rem; font-weight: 900; color: #ffe000;
@@ -197,16 +209,31 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════════
    GAME TABLE
    ═══════════════════════════════════════════════════════════════════════════════ */
-.onu-table {
+.uno-table {
   position: relative; width: 100%; height: 100dvh;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(124,109,255,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(30,143,255,0.03) 0%, transparent 60%),
-    #0a0b14;
+  background: #0a0b14;
+  z-index: 1;
 }
 
-.onu-hud {
+.uno-table::before {
+  content: '';
+  position: absolute; inset: -10%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(124,109,255,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 10% 20%, rgba(255,59,92,0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(0,214,143,0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(255,212,38,0.04) 0%, transparent 50%);
+  animation: table-bg-pulse 8s ease-in-out infinite alternate;
+  z-index: -1; pointer-events: none;
+}
+
+@keyframes table-bg-pulse {
+  0% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg) brightness(1); }
+  100% { transform: scale(1.05) rotate(2deg); filter: hue-rotate(20deg) brightness(1.2); }
+}
+
+.uno-hud {
   position: fixed; top: clamp(6px, 1.5vw, 14px);
   left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 8px;
@@ -217,14 +244,14 @@ body {
   padding: 6px 16px; z-index: 100;
   font-size: clamp(0.65rem, 1.5vw, 0.8rem);
 }
-.onu-hud__label { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 0.6rem; letter-spacing: 0.06em; }
-.onu-hud__code { font-weight: 800; color: #a79eff; letter-spacing: 0.1em; }
-.onu-hud__sep { width: 1px; height: 12px; background: rgba(255,255,255,0.1); }
-.onu-hud__color { display: flex; align-items: center; gap: 4px; }
-.onu-hud__dot { width: 10px; height: 10px; border-radius: 50%; }
-.onu-hud__color span { color: rgba(255,255,255,0.5); font-size: 0.65rem; text-transform: uppercase; }
+.uno-hud__label { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 0.6rem; letter-spacing: 0.06em; }
+.uno-hud__code { font-weight: 800; color: #a79eff; letter-spacing: 0.1em; }
+.uno-hud__sep { width: 1px; height: 12px; background: rgba(255,255,255,0.1); }
+.uno-hud__color { display: flex; align-items: center; gap: 4px; }
+.uno-hud__dot { width: 10px; height: 10px; border-radius: 50%; }
+.uno-hud__color span { color: rgba(255,255,255,0.5); font-size: 0.65rem; text-transform: uppercase; }
 
-.onu-opponents {
+.uno-opponents {
   position: absolute; top: clamp(40px, 6vh, 60px);
   left: 0; right: 0;
   display: flex; justify-content: space-evenly; align-items: flex-start;
@@ -232,7 +259,7 @@ body {
   z-index: 10;
 }
 
-.onu-center {
+.uno-center {
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   display: flex; align-items: center;
@@ -240,7 +267,7 @@ body {
   z-index: 20;
 }
 
-.onu-discard {
+.uno-discard {
   position: relative;
   width: calc(var(--card-w) + 16px);
   height: calc(var(--card-h) + 16px);
@@ -250,7 +277,7 @@ body {
   perspective: 1000px;
 }
 
-.onu-discard.bounce .onu-card {
+.uno-discard.bounce .uno-card {
   animation: discard-bounce 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -260,7 +287,7 @@ body {
   100% { transform: scale(1) translateZ(0) translateY(0); }
 }
 
-.onu-bot-thinking {
+.uno-bot-thinking {
   position: fixed; bottom: clamp(180px, 25vh, 220px);
   left: 50%; transform: translateX(-50%);
   background: rgba(15,17,32,0.9);
@@ -272,16 +299,16 @@ body {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-.onu-bottom {
+.uno-bottom {
   position: absolute; bottom: 0; left: 0; right: 0;
   z-index: 30;
 }
 
-.onu-turn-banner {
+.uno-turn-banner {
   text-align: center; margin-bottom: 2px;
 }
-.onu-turn-banner::before { display: none; }
-.onu-turn-banner {
+.uno-turn-banner::before { display: none; }
+.uno-turn-banner {
   display: inline-flex; align-items: center; gap: 6px;
   background: linear-gradient(135deg, rgba(124,109,255,0.35), rgba(79,63,240,0.2));
   border: 1px solid rgba(124,109,255,0.5);
@@ -297,23 +324,23 @@ body {
   50% { box-shadow: 0 0 20px rgba(124,109,255,0.3); }
 }
 
-.onu-hint {
+.uno-hint {
   text-align: center;
   color: rgba(255,255,255,0.2);
   font-size: 0.6rem;
   margin-bottom: 2px;
 }
 
-.onu-actions {
+.uno-actions {
   display: flex; align-items: center; justify-content: space-between;
   padding: 4px clamp(8px, 2vw, 20px);
 }
-.onu-actions__left { min-width: 80px; }
-.onu-actions__center { display: flex; gap: 8px; align-items: center; }
-.onu-actions__right { min-width: 60px; display: flex; justify-content: flex-end; }
+.uno-actions__left { min-width: 80px; }
+.uno-actions__center { display: flex; gap: 8px; align-items: center; }
+.uno-actions__right { min-width: 60px; display: flex; justify-content: flex-end; }
 
 /* ── Hand ──────────────────────────────────────────────────────────────────── */
-.onu-hand {
+.uno-hand {
   display: flex; align-items: flex-end; justify-content: center;
   padding: 2px clamp(8px, 2vw, 16px) clamp(8px, 2vh, 18px);
   overflow: visible; /* Fixes drag animation cropping */
@@ -322,17 +349,17 @@ body {
   min-height: clamp(80px, 12vh, 128px);
 }
 
-.onu-hand__slot {
+.uno-hand__slot {
   flex-shrink: 0; position: relative;
   transition: transform 200ms var(--ease-spring), z-index 0ms;
 }
 
-.onu-hand__slot--playable {
+.uno-hand__slot--playable {
   cursor: grab;
   animation: card-float 4s ease-in-out infinite alternate;
 }
 
-.onu-hand__slot--playable:nth-child(even) {
+.uno-hand__slot--playable:nth-child(even) {
   animation-duration: 3.5s;
   animation-direction: alternate-reverse;
 }
@@ -343,28 +370,28 @@ body {
   100% { transform: translateY(0px) rotate(-1deg); }
 }
 
-.onu-hand__slot--playable:hover {
+.uno-hand__slot--playable:hover {
   animation: none;
   transform: translateY(-24px) scale(1.1) rotate(0deg);
   z-index: 50 !important;
 }
 
-.onu-hand__slot--dragged {
+.uno-hand__slot--dragged {
   animation: none !important;
   transform: translateY(-40px) scale(1.15) rotate(0deg) !important;
   z-index: 100 !important;
 }
 
-[class*="onu-hand__slot--playing-"] {
+[class*="uno-hand__slot--playing-"] {
   pointer-events: none;
 }
 
-.onu-hand__slot--playing-normal { animation: card-fly-normal 450ms var(--ease-spring) forwards; }
-.onu-hand__slot--playing-attack { animation: card-fly-attack 450ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.onu-hand__slot--playing-impact { animation: card-fly-impact 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.onu-hand__slot--playing-swipe  { animation: card-fly-swipe 350ms ease-in forwards; }
-.onu-hand__slot--playing-rotate { animation: card-fly-rotate 500ms var(--ease-spring) forwards; }
-.onu-hand__slot--playing-burst  { animation: card-fly-burst 500ms var(--ease-spring) forwards; }
+.uno-hand__slot--playing-normal { animation: card-fly-normal 450ms var(--ease-spring) forwards; }
+.uno-hand__slot--playing-attack { animation: card-fly-attack 450ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.uno-hand__slot--playing-impact { animation: card-fly-impact 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.uno-hand__slot--playing-swipe  { animation: card-fly-swipe 350ms ease-in forwards; }
+.uno-hand__slot--playing-rotate { animation: card-fly-rotate 500ms var(--ease-spring) forwards; }
+.uno-hand__slot--playing-burst  { animation: card-fly-burst 500ms var(--ease-spring) forwards; }
 
 @keyframes card-fly-normal {
   0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
@@ -415,7 +442,7 @@ body {
   100% { transform: translate(-50%, -300px) scale(0.5) rotate(180deg); opacity: 0; }
 }
 
-.onu-hand__empty {
+.uno-hand__empty {
   color: rgba(255,255,255,0.3); font-size: 0.85rem;
   padding: 24px; align-self: center;
 }
@@ -423,7 +450,7 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════════
    BUTTONS
    ═══════════════════════════════════════════════════════════════════════════════ */
-.onu-btn {
+.uno-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 8px 16px; border-radius: 100px;
   font-family: var(--font-outfit), 'Outfit', sans-serif;
@@ -432,16 +459,16 @@ body {
   transition: transform 120ms var(--ease-spring), box-shadow 120ms;
   white-space: nowrap;
 }
-.onu-btn:hover { transform: translateY(-2px); }
-.onu-btn:active { transform: scale(0.95); }
+.uno-btn:hover { transform: translateY(-2px); }
+.uno-btn:active { transform: scale(0.95); }
 
-.onu-btn--draw {
+.uno-btn--draw {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
   color: rgba(255,255,255,0.8);
 }
 
-.onu-btn--uno {
+.uno-btn--uno {
   background: linear-gradient(135deg, #ff3b5c, #c41e3a);
   color: white; font-weight: 900;
   font-size: clamp(0.8rem, 2vw, 1rem);
@@ -455,12 +482,12 @@ body {
   50% { transform: scale(1.05); box-shadow: 0 8px 32px rgba(255,59,92,0.6); }
 }
 
-.onu-btn--leave {
+.uno-btn--leave {
   background: transparent; color: rgba(255,255,255,0.3);
   font-size: 0.68rem; padding: 6px 12px;
 }
 
-.onu-uno-said {
+.uno-uno-said {
   color: #00d68f; font-size: 0.72rem; font-weight: 700;
   animation: check-pop 300ms var(--ease-spring);
 }
@@ -473,13 +500,13 @@ body {
 /* ═══════════════════════════════════════════════════════════════════════════════
    LOBBY
    ═══════════════════════════════════════════════════════════════════════════════ */
-.onu-lobby {
+.uno-lobby {
   display: flex; align-items: center; justify-content: center;
   height: 100dvh; padding: 16px;
   position: relative;
 }
 
-.onu-lobby__modal {
+.uno-lobby__modal {
   background: rgba(15,17,32,0.85);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255,255,255,0.08);
@@ -490,28 +517,28 @@ body {
   z-index: 10; position: relative;
 }
 
-.onu-lobby__header {
+.uno-lobby__header {
   text-align: center; margin-bottom: 28px;
 }
 
-.onu-lobby__logo {
+.uno-lobby__logo {
   margin-bottom: 12px;
 }
 
-.onu-lobby__logo-cards {
+.uno-lobby__logo-cards {
   display: flex; justify-content: center; gap: -4px;
 }
 
-.onu-logo-card {
+.uno-logo-card {
   width: 28px; height: 40px;
   border-radius: 6px;
   border: 2px solid rgba(255,255,255,0.2);
   margin-left: -8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
-.onu-logo-card:first-child { margin-left: 0; }
+.uno-logo-card:first-child { margin-left: 0; }
 
-.onu-lobby__title {
+.uno-lobby__title {
   font-size: clamp(1.6rem, 5vw, 2.5rem);
   font-weight: 900;
   letter-spacing: -0.02em;
@@ -528,27 +555,27 @@ body {
   50% { background-position: 100% 50%; }
 }
 
-.onu-lobby__field { margin-bottom: 16px; }
+.uno-lobby__field { margin-bottom: 16px; }
 
-.onu-label {
+.uno-label {
   font-size: 0.72rem; font-weight: 600;
   color: rgba(255,255,255,0.5);
   letter-spacing: 0.06em;
   display: block; margin-bottom: 6px;
 }
 
-.onu-value {
+.uno-value {
   font-size: 0.85rem; font-weight: 700; color: white;
 }
 
-.onu-tabs {
+.uno-tabs {
   display: flex;
   background: rgba(255,255,255,0.04);
   border-radius: 12px; padding: 4px;
   margin-bottom: 20px;
 }
 
-.onu-tabs__btn {
+.uno-tabs__btn {
   flex: 1; padding: 8px 0; border: none; cursor: pointer;
   border-radius: 8px;
   background: transparent;
@@ -558,31 +585,31 @@ body {
   transition: all 150ms; letter-spacing: 0.02em;
 }
 
-.onu-tabs__btn--active {
+.uno-tabs__btn--active {
   background: rgba(124,109,255,0.3);
   color: white;
 }
 
-.onu-lobby__toggle {
+.uno-lobby__toggle {
   display: flex; align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
 }
 
-.onu-toggle {
+.uno-toggle {
   width: 44px; height: 24px; border-radius: 12px;
   border: none; cursor: pointer;
   position: relative; transition: background 200ms;
 }
 
-.onu-toggle__knob {
+.uno-toggle__knob {
   position: absolute; top: 2px;
   width: 20px; height: 20px; border-radius: 50%;
   background: white;
   transition: left 200ms var(--ease-spring);
 }
 
-.onu-lobby__error {
+.uno-lobby__error {
   margin-top: 12px; padding: 10px 16px;
   background: rgba(255,59,92,0.15);
   border: 1px solid rgba(255,59,92,0.3);
@@ -729,22 +756,22 @@ body {
 /* Mobile */
 @media (max-width: 480px) {
   :root { --card-w: 48px; --card-h: 72px; }
-  .onu-seat__avatar { width: 36px; height: 36px; font-size: 1rem; }
-  .onu-seat__name { font-size: 0.55rem; }
-  .onu-seat__count { font-size: 0.48rem; }
-  .onu-seat__mini-card { width: 7px; height: 11px; }
-  .onu-hud { padding: 4px 10px; gap: 5px; }
-  .onu-btn { padding: 6px 12px; font-size: 0.68rem; }
-  .onu-btn--uno { padding: 8px 16px; font-size: 0.78rem; }
-  .onu-hand { min-height: 80px; padding: 2px 6px 10px; }
-  .onu-discard { width: 56px; height: 80px; }
+  .uno-seat__avatar { width: 36px; height: 36px; font-size: 1rem; }
+  .uno-seat__name { font-size: 0.55rem; }
+  .uno-seat__count { font-size: 0.48rem; }
+  .uno-seat__mini-card { width: 7px; height: 11px; }
+  .uno-hud { padding: 4px 10px; gap: 5px; }
+  .uno-btn { padding: 6px 12px; font-size: 0.68rem; }
+  .uno-btn--uno { padding: 8px 16px; font-size: 0.78rem; }
+  .uno-hand { min-height: 80px; padding: 2px 6px 10px; }
+  .uno-discard { width: 56px; height: 80px; }
 }
 
 /* Tablet */
 @media (min-width: 481px) and (max-width: 768px) {
   :root { --card-w: 56px; --card-h: 84px; }
-  .onu-seat__avatar { width: 42px; height: 42px; font-size: 1.2rem; }
-  .onu-hand { min-height: 96px; }
+  .uno-seat__avatar { width: 42px; height: 42px; font-size: 1.2rem; }
+  .uno-hand { min-height: 96px; }
 }
 
 /* Small laptop */
@@ -760,5 +787,5 @@ body {
 /* Large desktop */
 @media (min-width: 1440px) {
   :root { --card-w: 80px; --card-h: 120px; }
-  .onu-seat__avatar { width: 60px; height: 60px; font-size: 1.8rem; }
+  .uno-seat__avatar { width: 60px; height: 60px; font-size: 1.8rem; }
 }

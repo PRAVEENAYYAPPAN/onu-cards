@@ -35,7 +35,7 @@ export function RoomLobby({ gameState, myId, onStart, onLeave }: RoomLobbyProps)
       >
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h1 className="text-gradient" style={{ fontSize: '1.8rem', fontWeight: 900 }}>ONU Cards</h1>
+          <h1 className="text-gradient" style={{ fontSize: '1.8rem', fontWeight: 900 }}>UNO</h1>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', marginTop: 4 }}>
             Waiting for players…
           </p>

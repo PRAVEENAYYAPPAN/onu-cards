@@ -1,5 +1,5 @@
 'use client';
-// ─── ONU Cards – Lobby / Home Screen ──────────────────────────────────────────
+// ─── UNO – Lobby / Home Screen ──────────────────────────────────────────
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { RoomOptions } from '@/lib/types';
@@ -147,37 +147,37 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
   };
 
   return (
-    <div className="onu-lobby">
+    <div className="uno-lobby">
       {/* Full-screen animated background */}
       <FloatingCards />
 
       {/* Centered modal */}
       <motion.div
-        className="onu-lobby__modal"
+        className="uno-lobby__modal"
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: 'spring', stiffness: 280, damping: 22 }}
       >
         {/* Title */}
-        <div className="onu-lobby__header">
+        <div className="uno-lobby__header">
           <motion.div
-            className="onu-lobby__logo"
+            className="uno-lobby__logo"
             animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <div className="onu-lobby__logo-cards">
-              <div className="onu-logo-card" style={{ background: '#ff4d6d', transform: 'rotate(-15deg)' }} />
-              <div className="onu-logo-card" style={{ background: '#ffd166', transform: 'rotate(0deg)' }} />
-              <div className="onu-logo-card" style={{ background: '#06d6a0', transform: 'rotate(15deg)' }} />
-              <div className="onu-logo-card" style={{ background: '#4cc9f0', transform: 'rotate(28deg)' }} />
+            <div className="uno-lobby__logo-cards">
+              <div className="uno-logo-card" style={{ background: '#ff4d6d', transform: 'rotate(-15deg)' }} />
+              <div className="uno-logo-card" style={{ background: '#ffd166', transform: 'rotate(0deg)' }} />
+              <div className="uno-logo-card" style={{ background: '#06d6a0', transform: 'rotate(15deg)' }} />
+              <div className="uno-logo-card" style={{ background: '#4cc9f0', transform: 'rotate(28deg)' }} />
             </div>
           </motion.div>
-          <h1 className="onu-lobby__title">ONU Cards</h1>
+          <h1 className="uno-lobby__title">UNO</h1>
         </div>
 
         {/* Name */}
-        <div className="onu-lobby__field">
-          <label className="onu-label">YOUR NAME</label>
+        <div className="uno-lobby__field">
+          <label className="uno-label">YOUR NAME</label>
           <input
             className="nova-input"
             value={playerName}
@@ -189,12 +189,12 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
         </div>
 
         {/* Tabs */}
-        <div className="onu-tabs">
+        <div className="uno-tabs">
           {(['create', 'join'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`onu-tabs__btn ${tab === t ? 'onu-tabs__btn--active' : ''}`}
+              className={`uno-tabs__btn ${tab === t ? 'uno-tabs__btn--active' : ''}`}
               id={`tab-${t}`}
             >
               {t === 'create' ? '✨ Create Room' : '🔗 Join Room'}
@@ -209,10 +209,10 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
               exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.15 }}
             >
               {/* Total players */}
-              <div className="onu-lobby__field">
+              <div className="uno-lobby__field">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <label className="onu-label">TOTAL PLAYERS</label>
-                  <span className="onu-value">{totalPlayers}</span>
+                  <label className="uno-label">TOTAL PLAYERS</label>
+                  <span className="uno-value">{totalPlayers}</span>
                 </div>
                 <input
                   className="nova-slider" type="range" min={2} max={7}
@@ -227,10 +227,10 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
               </div>
 
               {/* Bot count */}
-              <div className="onu-lobby__field">
+              <div className="uno-lobby__field">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <label className="onu-label">BOTS</label>
-                  <span className="onu-value">
+                  <label className="uno-label">BOTS</label>
+                  <span className="uno-value">
                     {botCount} bots · {humanCount} human{humanCount !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -243,10 +243,10 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
               </div>
 
               {/* Match Timer */}
-              <div className="onu-lobby__field" style={{ marginTop: 16 }}>
+              <div className="uno-lobby__field" style={{ marginTop: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <label className="onu-label">MATCH TIMER</label>
-                  <span className="onu-value">{matchDuration === 0 ? 'Unlimited' : `${matchDuration} min`}</span>
+                  <label className="uno-label">MATCH TIMER</label>
+                  <span className="uno-value">{matchDuration === 0 ? 'Unlimited' : `${matchDuration} min`}</span>
                 </div>
                 <select
                   className="nova-input"
@@ -261,15 +261,15 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
               </div>
 
               {/* Public toggle */}
-              <div className="onu-lobby__toggle" style={{ marginTop: 16 }}>
-                <label className="onu-label">PUBLIC ROOM</label>
+              <div className="uno-lobby__toggle" style={{ marginTop: 16 }}>
+                <label className="uno-label">PUBLIC ROOM</label>
                 <button
                   onClick={() => setIsPublic(!isPublic)}
-                  className="onu-toggle"
+                  className="uno-toggle"
                   style={{ background: isPublic ? 'rgba(124,109,255,0.8)' : 'rgba(255,255,255,0.1)' }}
                   id="toggle-public-room"
                 >
-                  <div className="onu-toggle__knob" style={{ left: isPublic ? 22 : 2 }} />
+                  <div className="uno-toggle__knob" style={{ left: isPublic ? 22 : 2 }} />
                 </button>
               </div>
 
@@ -287,8 +287,8 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
               initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}
             >
-              <div className="onu-lobby__field">
-                <label className="onu-label">ROOM CODE</label>
+              <div className="uno-lobby__field">
+                <label className="uno-label">ROOM CODE</label>
                 <input
                   className="nova-input"
                   value={joinCode}
@@ -321,7 +321,7 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
             <motion.div
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="onu-lobby__error"
+              className="uno-lobby__error"
             >
               ⚠️ {error}
             </motion.div>

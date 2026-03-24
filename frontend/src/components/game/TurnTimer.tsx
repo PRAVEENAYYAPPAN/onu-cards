@@ -1,5 +1,5 @@
 'use client';
-// ─── ONU Cards – Turn Timer (circular countdown) ──────────────────────────────
+// ─── UNO – Turn Timer (circular countdown) ──────────────────────────────
 import { useEffect, useState, useRef } from 'react';
 
 interface TurnTimerProps {

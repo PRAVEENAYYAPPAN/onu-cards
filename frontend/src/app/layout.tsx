@@ -17,11 +17,11 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'ONU Cards – Multiplayer Card Game',
+  title: 'UNO – Multiplayer Card Game',
   description: 'Fast, smooth, and colorful multiplayer card game. Play with friends or bots. No downloads required.',
-  keywords: ['card game', 'multiplayer', 'online', 'free', 'browser game', 'onu cards'],
+  keywords: ['card game', 'multiplayer', 'online', 'free', 'browser game', 'UNO'],
   openGraph: {
-    title: 'ONU Cards',
+    title: 'UNO',
     description: 'The ultimate multiplayer card game in your browser',
     type: 'website',
   },

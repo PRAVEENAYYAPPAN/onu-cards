@@ -1,5 +1,5 @@
 'use client';
-// ─── ONU Cards – Game Table (Enhanced) ────────────────────────────────────────
+// ─── UNO – Game Table (Enhanced) ────────────────────────────────────────
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Card, CardColor, GameState } from '@/lib/types';
 import { ColorPicker } from './ColorPicker';
@@ -41,7 +41,7 @@ const EXACT_UNO_COLORS: Record<string, string> = {
 
 // ─── UNO-Style Card Component ─────────────────────────────────────────────────
 
-interface OnuCardProps {
+interface UnoCardProps {
   card: Card;
   playable?: boolean;
   faceDown?: boolean;
@@ -52,7 +52,7 @@ interface OnuCardProps {
 
 import { motion } from 'framer-motion';
 
-function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging, animate }: OnuCardProps) {
+function UnoCard({ card, playable = false, faceDown = false, onClick, isDragging, animate }: UnoCardProps) {
   const label = SYMBOLS[card.value] ?? card.value;
   const bgColor = faceDown ? '#1a1a2e' : (EXACT_UNO_COLORS[card.color] ?? '#111');
   const glow = faceDown ? '#000' : (EXACT_UNO_COLORS[card.color] ?? '#fff');
@@ -63,7 +63,7 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
   return (
     <motion.div
       layoutId={`card-${card.id}`}
-      className="onu-card"
+      className="uno-card"
       onClick={onClick}
       data-playable={playable || undefined}
       data-dragging={isDragging || undefined}
@@ -118,7 +118,7 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
             )}
 
             {/* Top-left corner */}
-            <span className="onu-card__corner" style={{ top: '4%', left: '8%' }}>
+            <span className="uno-card__corner" style={{ top: '4%', left: '8%' }}>
               {label}
             </span>
             {/* Center value */}
@@ -135,7 +135,7 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
               {label}
             </span>
             {/* Bottom-right corner */}
-            <span className="onu-card__corner" style={{ bottom: '4%', right: '8%', transform: 'rotate(180deg)' }}>
+            <span className="uno-card__corner" style={{ bottom: '4%', right: '8%', transform: 'rotate(180deg)' }}>
               {label}
             </span>
           </>
@@ -155,7 +155,7 @@ function OnuCard({ card, playable = false, faceDown = false, onClick, isDragging
               textShadow: '1px 1px 0 #000',
               letterSpacing: '0.05em',
               transform: 'rotate(25deg)',
-            }}>ONU</span>
+            }}>UNO</span>
           </div>
         )}
       </div>
@@ -169,22 +169,22 @@ function DrawPile({ count, onClick }: { count: number; onClick?: () => void }) {
   return (
     <div
       id="draw-pile" onClick={onClick}
-      className="onu-draw-pile"
+      className="uno-draw-pile"
       style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       {[3, 2, 1, 0].map(i => (
-        <div key={i} className="onu-draw-pile__layer" style={{
+        <div key={i} className="uno-draw-pile__layer" style={{
           top: -(i * 2), left: i * 1.5, zIndex: i,
         }}>
           {i === 0 && (
             <span style={{
               fontSize: 'clamp(0.5rem, 1.2vw, 0.8rem)', fontWeight: 900,
               color: 'rgba(255,255,255,0.12)',
-            }}>ONU</span>
+            }}>UNO</span>
           )}
         </div>
       ))}
-      <div className="onu-draw-pile__badge">{count}</div>
+      <div className="uno-draw-pile__badge">{count}</div>
     </div>
   );
 }
@@ -212,9 +212,17 @@ function PlayerSeat({
   const emoji = isBot ? BOT_ICONS[seed] : HUMAN_ICONS[seed];
 
   return (
-    <div className={`onu-seat ${isActive ? 'onu-seat--active' : ''} ${isMe ? 'onu-seat--me' : ''}`}>
+    <div className={`uno-seat ${isActive ? 'uno-seat--active' : ''} ${isMe ? 'uno-seat--me' : ''}`}>
       {/* Timer ring wraps avatar */}
       <div style={{ position: 'relative' }}>
+        {/* Animated Turn Arrow pointing at avatar */}
+        {isActive && (
+          <div className="uno-turn-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+          </div>
+        )}
         {timerActive && (
           <div style={{ position: 'absolute', top: -4, left: -4, zIndex: 5 }}>
             <TurnTimer
@@ -226,21 +234,21 @@ function PlayerSeat({
             />
           </div>
         )}
-        <div className="onu-seat__avatar">
+        <div className="uno-seat__avatar">
           {emoji}
-          {isBot && <div className="onu-seat__bot-badge">BOT</div>}
+          {isBot && <div className="uno-seat__bot-badge">BOT</div>}
         </div>
       </div>
-      <span className="onu-seat__name">
+      <span className="uno-seat__name">
         {name}{isMe ? ' (You)' : ''}
       </span>
-      <span className="onu-seat__count">
+      <span className="uno-seat__count">
         {cardCount} card{cardCount !== 1 ? 's' : ''}
       </span>
       {/* Mini card fan */}
-      <div className="onu-seat__cards">
+      <div className="uno-seat__cards">
         {Array.from({ length: Math.min(cardCount, 20) }).map((_, i) => (
-          <div key={i} className="onu-seat__mini-card" style={{
+          <div key={i} className="uno-seat__mini-card" style={{
             marginLeft: i > 0 ? 'clamp(-20px, -2vw, -12px)' : 0, zIndex: i,
           }} />
         ))}
@@ -334,7 +342,7 @@ export function GameTable({
 
     // Bounce effect delay to match landing
     setTimeout(() => {
-      const discard = document.querySelector('.onu-discard');
+      const discard = document.querySelector('.uno-discard');
       if (discard) {
         discard.classList.remove('bounce');
         void (discard as HTMLElement).offsetWidth; // trigger reflow
@@ -442,16 +450,16 @@ export function GameTable({
   }, [gameState.matchDurationInMinutes, gameState.matchStartedAt]);
 
   return (
-    <div className="onu-table">
+    <div className="uno-table">
 
       {/* ── HUD ────────────────────────────────────────────────────────────── */}
-      <div className="onu-hud">
-        <span className="onu-hud__label">ROOM</span>
-        <span className="onu-hud__code">{gameState.roomCode}</span>
-        <div className="onu-hud__sep" />
+      <div className="uno-hud">
+        <span className="uno-hud__label">ROOM</span>
+        <span className="uno-hud__code">{gameState.roomCode}</span>
+        <div className="uno-hud__sep" />
         <span style={{ fontSize: '0.9rem' }}>{gameState.direction === 'cw' ? '🔄' : '🔃'}</span>
-        <div className="onu-hud__color">
-          <div className="onu-hud__dot" style={{
+        <div className="uno-hud__color">
+          <div className="uno-hud__dot" style={{
             background: EXACT_UNO_COLORS[gameState.currentColor] ?? EXACT_UNO_COLORS.wild,
             boxShadow: `0 0 8px ${EXACT_UNO_COLORS[gameState.currentColor] ?? '#fff'}`,
           }} />
@@ -462,14 +470,14 @@ export function GameTable({
         )}
         {matchTimeLeft && (
           <>
-            <div className="onu-hud__sep" />
+            <div className="uno-hud__sep" />
             <span style={{ color: '#ffd166', fontWeight: 800 }}>⏱ {matchTimeLeft}</span>
           </>
         )}
       </div>
 
       {/* ── Opponents ──────────────────────────────────────────────────────── */}
-      <div className="onu-opponents">
+      <div className="uno-opponents">
         {others.map(player => (
           <PlayerSeat
             key={player.id} name={player.name} isBot={player.type === 'bot'}
@@ -482,10 +490,10 @@ export function GameTable({
       </div>
 
       {/* ── Center: Draw + Discard ─────────────────────────────────────────── */}
-      <div className="onu-center">
+      <div className="uno-center">
         <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
-        <div className="onu-discard">
-          {topCard && <OnuCard card={topCard} />}
+        <div className="uno-discard">
+          {topCard && <UnoCard card={topCard} />}
           
           {/* Stack Counter Visual UI */}
           {gameState.pendingDraw > 0 && (
@@ -508,7 +516,7 @@ export function GameTable({
           position: 'absolute', top: '15%', left: '50%', zIndex: 999,
           animation: 'opponent-play-drop 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
         }}>
-          <OnuCard card={animTrigger.card} />
+          <UnoCard card={animTrigger.card} />
         </div>
       )}
       {animTrigger?.type === 'draw' && (
@@ -517,33 +525,33 @@ export function GameTable({
           transform: 'translate(-50%, -50%)',
           animation: 'opponent-draw-fly 400ms ease-in forwards',
         }}>
-          <OnuCard card={topCard} faceDown />
+          <UnoCard card={topCard} faceDown />
         </div>
       )}
 
       {/* ── Status overlays ────────────────────────────────────────────────── */}
       {isBotTurn && (
-        <div className="onu-bot-thinking">
+        <div className="uno-bot-thinking">
           🤖 {currentPlayer?.name} is thinking…
         </div>
       )}
 
       {/* ── Bottom section ─────────────────────────────────────────────────── */}
-      <div className="onu-bottom">
+      <div className="uno-bottom">
 
         {/* YOUR TURN */}
         {isMyTurn && (
-          <div className="onu-turn-banner">✨ YOUR TURN</div>
+          <div className="uno-turn-banner">✨ YOUR TURN</div>
         )}
 
         {/* Hint */}
         {isMyTurn && (
-          <div className="onu-hint">Tap a card or swipe up to play ↑</div>
+          <div className="uno-hint">Tap a card or swipe up to play ↑</div>
         )}
 
         {/* Action bar */}
-        <div className="onu-actions">
-          <div className="onu-actions__left">
+        <div className="uno-actions">
+          <div className="uno-actions__left">
             {me && (
               <PlayerSeat
                 name={me.name} isBot={false} isActive={isMyTurn}
@@ -556,30 +564,30 @@ export function GameTable({
             )}
           </div>
 
-          <div className="onu-actions__center">
+          <div className="uno-actions__center">
             {/* UNO Button (show when 2 cards) */}
             {shouldShowUno && !saidUno && (
-              <button className="onu-btn onu-btn--uno" onClick={handleSayUno} id="btn-say-uno">
+              <button className="uno-btn uno-btn--uno" onClick={handleSayUno} id="btn-say-uno">
                 🔥 UNO!
               </button>
             )}
             {saidUno && shouldShowUno && (
-              <span className="onu-uno-said">✓ UNO called!</span>
+              <span className="uno-uno-said">✓ UNO called!</span>
             )}
             {isMyTurn && (
-              <button className="onu-btn onu-btn--draw" onClick={handleDrawCard} id="btn-draw-action">
+              <button className="uno-btn uno-btn--draw" onClick={handleDrawCard} id="btn-draw-action">
                 📥 Draw
               </button>
             )}
           </div>
 
-          <div className="onu-actions__right">
-            <button className="onu-btn onu-btn--leave" onClick={onLeave}>Leave</button>
+          <div className="uno-actions__right">
+            <button className="uno-btn uno-btn--leave" onClick={onLeave}>Leave</button>
           </div>
         </div>
 
         {/* ── Hand ──────────────────────────────────────────────────────────── */}
-        <div className="onu-hand" id="player-hand">
+        <div className="uno-hand" id="player-hand">
           {myHand.map((card, i) => {
             const playable = isMyTurn && isPlayable(card, gameState);
             const isPlaying = playingCard?.id === card.id;
@@ -587,7 +595,7 @@ export function GameTable({
             return (
               <div
                 key={card.id}
-                className={`onu-hand__slot ${playable ? 'onu-hand__slot--playable' : ''} ${isPlaying ? `onu-hand__slot--playing-${playingCard.type}` : ''} ${isDragged ? 'onu-hand__slot--dragged' : ''}`}
+                className={`uno-hand__slot ${playable ? 'uno-hand__slot--playable' : ''} ${isPlaying ? `uno-hand__slot--playing-${playingCard.type}` : ''} ${isDragged ? 'uno-hand__slot--dragged' : ''}`}
                 style={{
                   marginLeft: i === 0 ? 0 : 'clamp(-22px, -3vw, -12px)',
                   zIndex: isPlaying ? 1000 : playable ? 10 + i : i,
@@ -598,7 +606,7 @@ export function GameTable({
                 onMouseUp={handleDragEnd}
                 onMouseLeave={e => { if (draggedCardId === card.id) handleDragEnd(e); }}
               >
-                <OnuCard
+                <UnoCard
                   card={card}
                   playable={playable}
                   isDragging={isDragged}
@@ -611,7 +619,7 @@ export function GameTable({
             );
           })}
           {myHand.length === 0 && (
-            <p className="onu-hand__empty">No cards — you won! 🎉</p>
+            <p className="uno-hand__empty">No cards — you won! 🎉</p>
           )}
         </div>
       </div>

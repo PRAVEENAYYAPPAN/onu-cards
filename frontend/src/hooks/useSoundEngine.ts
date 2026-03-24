@@ -1,5 +1,5 @@
 'use client';
-// ─── ONU Cards – Sound Engine (Web Audio API) ─────────────────────────────────
+// ─── UNO – Sound Engine (Web Audio API) ─────────────────────────────────
 // Synthesized sounds — no audio files needed
 import { useCallback, useRef, useEffect } from 'react';
 

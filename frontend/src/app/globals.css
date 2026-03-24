@@ -149,6 +149,11 @@ body {
   animation: seat-glow 1.5s ease-in-out infinite;
 }
 
+/* Performance: GPU acceleration for moving elements */
+.uno-card, .uno-seat, .uno-turn-indicator-linear, .uno-pending-card-visual, .uno-draw-pile, .uno-center {
+  will-change: transform;
+}
+
 /* Linear Turn Arrow Replacement */
 .uno-turn-indicator-linear {
   position: absolute;
@@ -159,6 +164,7 @@ body {
   z-index: 100;
   filter: drop-shadow(0 0 12px rgba(0,214,143,0.9));
   animation: turn-linear-bounce 1.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 @keyframes turn-linear-bounce {
@@ -838,6 +844,45 @@ body {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 /* Mobile */
+/* Mobile Landscape Optimization */
+@media (max-width: 932px) and (orientation: landscape) {
+  :root { --card-w: 44px; --card-h: 66px; }
+  
+  .uno-table { display: grid; grid-template-columns: 100px 1fr 100px; grid-template-rows: 60px 1fr 80px; }
+  
+  /* Piles move up slightly since vertical space is limited */
+  .uno-center { top: 44%; gap: 15px; }
+
+  /* Opponents spread to the sides to use horizontal space */
+  .uno-opponents {
+    position: fixed; inset: 0;
+    display: block; pointer-events: none;
+    z-index: 50;
+  }
+  
+  /* Place opponents around the sides */
+  .uno-opponents > .uno-seat:nth-child(1) { position: absolute; top: 10px; left: 10px; pointer-events: auto; }
+  .uno-opponents > .uno-seat:nth-child(2) { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); pointer-events: auto; }
+  .uno-opponents > .uno-seat:nth-child(3) { position: absolute; top: 10px; right: 10px; pointer-events: auto; }
+  .uno-opponents > .uno-seat:nth-child(4) { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: auto; }
+  .uno-opponents > .uno-seat:nth-child(5) { position: absolute; top: 50%; left: 10px; transform: translateY(-50%); pointer-events: auto; }
+
+  /* HUD smaller and at the bottom left */
+  .uno-hud { top: auto; bottom: 10px; left: 20px; transform: none; font-size: 0.6rem; padding: 4px 10px; }
+
+  /* Hand bar should be compact at the bottom */
+  .uno-bottom { bottom: 0; padding-bottom: 5px; height: 95px; }
+  .uno-hand { min-height: 60px; gap: -20px; padding: 0 40px; }
+  .uno-actions { bottom: 10%; right: 20px; flex-direction: column; gap: 8px; }
+  .uno-actions__center { transform: none; }
+  
+  /* Button positions in landscape */
+  .uno-btn { padding: 8px 16px; font-size: 0.7rem; }
+  
+  /* Hide background floating elements on mobile to save frames */
+  .floating-cards-canvas { display: none !important; }
+}
+
 @media (max-width: 480px) {
   :root { --card-w: 48px; --card-h: 72px; }
   .uno-seat__avatar { width: 36px; height: 36px; font-size: 1rem; }

@@ -1,11 +1,12 @@
 'use client';
 // ─── UNO – Game Table (Enhanced) ────────────────────────────────────────
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import type { Card, CardColor, GameState } from '@/lib/types';
 import { ColorPicker } from './ColorPicker';
 import { WinnerScreen } from './WinnerScreen';
 import { TurnTimer } from './TurnTimer';
 import { useSoundEngine, getSoundForCard } from '@/hooks/useSoundEngine';
+import { useGameStore } from '@/store/gameStore';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ function UnoCard({ card, playable = false, faceDown = false, onClick, isDragging
         overflow: 'hidden',
         flexShrink: 0,
         x: 0, y: 0,
+        willChange: 'transform',
       } as React.CSSProperties}
       whileHover={playable ? { y: -24, scale: 1.1, rotate: Math.random() * 4 - 2 } : {}}
       whileTap={playable ? { scale: 0.95 } : {}}
@@ -193,7 +195,11 @@ function FloatingCards() {
 
     const frame = () => {
       ctx.clearRect(0, 0, width, height);
-      for (const c of cards) {
+      // Reduce card count on mobile for buttery smooth 60fps
+      const count = width < 768 ? 6 : 15;
+      for (let i = 0; i < count; i++) {
+        const c = cards[i];
+        if (!c) continue;
         c.x += c.vx; c.y += c.vy; c.rot += c.vr;
         if (c.x < -100) c.x = width + 100; if (c.x > width + 100) c.x = -100;
         if (c.y < -100) c.y = height + 100; if (c.y > height + 100) c.y = -100;
@@ -203,8 +209,6 @@ function FloatingCards() {
         ctx.scale(c.scale, c.scale);
         ctx.fillStyle = c.color;
         ctx.beginPath(); ctx.roundRect(-40, -60, 80, 120, 8); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.beginPath(); ctx.ellipse(0, 0, 30, 50, -25 * Math.PI / 180, 0, 2 * Math.PI); ctx.fill();
         ctx.restore();
       }
       animId = requestAnimationFrame(frame);
@@ -215,7 +219,7 @@ function FloatingCards() {
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
   }, []);
 
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }} />;
+  return <canvas ref={canvasRef} className="floating-cards-canvas" style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }} />;
 }
 
 // ─── Draw Pile ────────────────────────────────────────────────────────────────
@@ -348,8 +352,12 @@ export function GameTable({
   const lastDrawCountRef = useRef(gameState.drawPileCount ?? 108);
   const touchStartRef = useRef<{ id: string; y: number; card: Card } | null>(null);
 
-  const me = gameState.players.find(p => p.id === myId);
-  const others = gameState.players.filter(p => p.id !== myId);
+  // Performance Optimization: Memoize local derive lookups
+  const { me, others } = useMemo(() => ({
+    me: gameState.players.find(p => p.id === myId),
+    others: gameState.players.filter(p => p.id !== myId)
+  }), [gameState.players, myId]);
+
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isMyTurn = currentPlayer?.id === myId;
   const isBotTurn = currentPlayer?.type === 'bot';
@@ -390,6 +398,16 @@ export function GameTable({
   useEffect(() => {
     if (myHand.length > 2) setSaidUno(false);
   }, [myHand.length]);
+
+  // Networked UNO Shout (SAY_NOVA_SOUND)
+  const room = useGameStore(s => s.room);
+  useEffect(() => {
+    if (!room) return;
+    const unsub = room.onMessage('SAY_NOVA_SOUND', () => {
+       playSound('unoCall');
+    });
+    return () => { unsub(); };
+  }, [room, playSound]);
 
   // ── Play card with animation ──────────────────────────────────────────────
   const handlePlayCardAnimated = useCallback((card: Card) => {
@@ -489,9 +507,9 @@ export function GameTable({
   // ── UNO button ────────────────────────────────────────────────────────────
   const handleSayUno = useCallback(() => {
     setSaidUno(true);
-    playSound('unoCall');
+    // Sound is now handled by server broadcast to all players
     onSayNova();
-  }, [onSayNova, playSound]);
+  }, [onSayNova]);
 
   // ── Match Timer ───────────────────────────────────────────────────────────
   const [matchTimeLeft, setMatchTimeLeft] = useState<string>('');

@@ -364,7 +364,11 @@ export class NovaRoom extends Room {
 
   private handleSayNova(client: Client) {
     const player = this.gs.players.find(p => p.id === client.sessionId);
-    if (player) { player.saidNova = true; this.broadcastState(); }
+    if (player) {
+      player.saidNova = true;
+      this.broadcast('SAY_NOVA_SOUND', { playerId: player.id });
+      this.broadcastState();
+    }
   }
 
   private handlePlayAgain(client: Client) {

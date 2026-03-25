@@ -101,6 +101,9 @@ export class NovaRoom extends Room {
     this.onMessage('SAY_NOVA', (client) => {
       try { this.handleSayNova(client); } catch (e) { console.error('SAY_NOVA error:', e); }
     });
+    this.onMessage('KEEP_CARD', (client) => {
+      try { this.handleKeepCard(client); } catch (e) { console.error('KEEP_CARD error:', e); }
+    });
     this.onMessage('PLAY_AGAIN', (client) => {
       try { this.handlePlayAgain(client); } catch (e) { console.error('PLAY_AGAIN error:', e); }
     });
@@ -347,25 +350,26 @@ export class NovaRoom extends Room {
         this.broadcast('CARD_DRAWN', { playerId: player.id, count: 1 });
 
         if (isPlayable(card, this.gs as any)) {
-          // For bots, auto-pick a color. For humans, send CHOOSE_COLOR_REQUIRED
+          // For bots, auto-pick a color. For humans, ask if they want to play or keep it
           if (player.type === 'bot') {
             const chosenColor = card.color === 'wild' ? 'red' : undefined;
             this.handlePlayCard({ sessionId: player.id } as Client, { cardId: card.id, chosenColor });
             return;
-          } else if (card.color !== 'wild') {
-            // Non-wild playable — play immediately
-            this.handlePlayCard({ sessionId: player.id } as Client, { cardId: card.id });
-            return;
           } else {
-            // Wild or wild4 drawn by human — keep in hand, ask client to choose color
+            // Wait for human decision. Hand has increased.
             this.broadcastState();
-            this.broadcast('CHOOSE_COLOR_REQUIRED', { cardId: card.id, playerId: player.id });
+            if (card.color === 'wild') {
+               this.broadcast('CHOOSE_COLOR_REQUIRED', { cardId: card.id, playerId: player.id });
+            } else {
+               this.broadcast('PROMPT_KEEP_PLAY', { cardId: card.id, playerId: player.id });
+            }
             return;
           }
         }
       }
     }
 
+    // Unplayable drawn card, or stack pulled -> next turn
     this.gs.turnStartedAt = Date.now();
     this.gs.currentPlayerIndex = nextIndex(
       this.gs.currentPlayerIndex, this.gs.players.length, this.gs.direction
@@ -373,6 +377,23 @@ export class NovaRoom extends Room {
     this.broadcastState();
     this.scheduleNextTurn();
   }
+
+  private handleKeepCard(client: Client) {
+    if (this.gs.phase !== 'playing') return;
+    const player = this.gs.players[this.gs.currentPlayerIndex];
+    if (!player || player.id !== client.sessionId) return;
+    
+    // Human chose to keep drawn card, advance turn.
+    if (this.actionTimer) { clearTimeout(this.actionTimer); this.actionTimer = undefined; }
+    
+    this.gs.turnStartedAt = Date.now();
+    this.gs.currentPlayerIndex = nextIndex(
+      this.gs.currentPlayerIndex, this.gs.players.length, this.gs.direction
+    );
+    this.broadcastState();
+    this.scheduleNextTurn();
+  }
+
 
   private handleSayNova(client: Client) {
     const player = this.gs.players.find(p => p.id === client.sessionId);

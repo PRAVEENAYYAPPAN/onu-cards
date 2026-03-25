@@ -354,7 +354,8 @@ export function GameTable({
   const [pendingWild, setPendingWild] = useState<string | null>(null);
   const [playingCard, setPlayingCard] = useState<{ id: string, type: string } | null>(null);
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
-  const [animTrigger, setAnimTrigger] = useState<{ type: 'play' | 'draw', card?: Card } | null>(null);
+  const [animTrigger, setAnimTrigger] = useState<{ type: 'play' | 'draw', card?: Card, playerId?: string } | null>(null);
+  const [pendingKeepPlayCard, setPendingKeepPlayCard] = useState<string | null>(null);
   const [saidUno, setSaidUno] = useState(false);
   const { play: playSound } = useSoundEngine();
   const lastTurnIndexRef = useRef(gameState.currentPlayerIndex);
@@ -389,14 +390,7 @@ export function GameTable({
     }
     lastTopCardIdRef.current = topCard?.id;
 
-    // Check for draw
-    const newDrawCount = gameState.drawPileCount ?? 108;
-    if (newDrawCount < lastDrawCountRef.current && !playingCard) {
-        setAnimTrigger({ type: 'draw' });
-        playSound('cardDraw');
-        setTimeout(() => setAnimTrigger(null), 400);
-    }
-    lastDrawCountRef.current = newDrawCount;
+    lastTopCardIdRef.current = topCard?.id;
 
     if (gameState.currentPlayerIndex !== lastTurnIndexRef.current) {
       lastTurnIndexRef.current = gameState.currentPlayerIndex;
@@ -409,21 +403,34 @@ export function GameTable({
     if (myHand.length > 2) setSaidUno(false);
   }, [myHand.length]);
 
-  // Networked UNO Shout (SAY_NOVA_SOUND)
+  // Networked Events
   const room = useGameStore(s => s.room);
   useEffect(() => {
     if (!room) return;
     const unsubUno = room.onMessage('SAY_NOVA_SOUND', () => {
        playSound('unoCall');
     });
-    // When server tells us to pick a color for a drawn wild card
+    
+    const unsubDrawn = room.onMessage('CARD_DRAWN', (msg: { playerId: string; count: number }) => {
+       if (msg.count === 1 && !playingCard) {
+         setAnimTrigger({ type: 'draw', playerId: msg.playerId });
+         playSound('cardDraw');
+         setTimeout(() => setAnimTrigger(null), 400);
+       }
+    });
+
     const unsubColor = room.onMessage('CHOOSE_COLOR_REQUIRED', (msg: { cardId: string; playerId: string }) => {
        if (msg.playerId === myId) {
          setPendingWild(msg.cardId);
        }
     });
-    return () => { unsubUno(); unsubColor(); };
-  }, [room, playSound, myId]);
+
+    const unsubKeepPlay = room.onMessage('PROMPT_KEEP_PLAY', (msg: { cardId: string; playerId: string }) => {
+       if (msg.playerId === myId) setPendingKeepPlayCard(msg.cardId);
+    });
+
+    return () => { unsubUno(); unsubDrawn(); unsubColor(); unsubKeepPlay(); };
+  }, [room, playSound, myId, playingCard]);
 
   // ── Play card with animation ──────────────────────────────────────────────
   const handlePlayCardAnimated = useCallback((card: Card) => {
@@ -698,9 +705,9 @@ export function GameTable({
           <UnoCard card={animTrigger.card} />
         </div>
       )}
-      {animTrigger?.type === 'draw' && (
+      {animTrigger?.type === 'draw' && animTrigger.playerId && (
         <div 
-          className={isMyTurn ? "uno-draw-fly-to-hand" : "uno-draw-fly-to-opp"}
+          className={animTrigger.playerId === myId ? "uno-draw-fly-to-hand" : "uno-draw-fly-to-opp"}
           style={{
             position: 'absolute', top: '50%', left: '50%', zIndex: 999,
             transform: 'translate(-50%, -50%)',
@@ -808,6 +815,48 @@ export function GameTable({
 
       {/* ── Overlays ───────────────────────────────────────────────────────── */}
       <ColorPicker open={!!pendingWild} onSelect={handleColorChosen} />
+
+      {/* ── Keep / Play Modal for drawn cards ──────────────────────────────── */}
+      <AnimatePresence>
+        {pendingKeepPlayCard && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <motion.div initial={{ y: 50, scale: 0.8 }} animate={{ y: 0, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+                You drew a playable card!
+              </div>
+              <div style={{ pointerEvents: 'none', transform: 'scale(1.4)', filter: 'drop-shadow(0 16px 32px rgba(255,255,255,0.2))' }}>
+                <UnoCard card={myHand.find(c => c.id === pendingKeepPlayCard) || { id: '', color: 'red', value: '0' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
+                <button
+                  className="nova-btn"
+                  style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
+                  onClick={() => {
+                    room?.send('KEEP_CARD');
+                    setPendingKeepPlayCard(null);
+                  }}
+                >
+                  Keep in Hand
+                </button>
+                <button
+                  className="nova-btn nova-btn--primary"
+                  style={{ boxShadow: '0 8px 24px rgba(255,59,92,0.6)' }}
+                  onClick={() => {
+                    const c = myHand.find(c => c.id === pendingKeepPlayCard);
+                    setPendingKeepPlayCard(null);
+                    if (c) handlePlayCardAnimated(c);
+                  }}
+                >
+                  Play Now
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {gameState.phase === 'ended' && gameState.winnerId && (
         <WinnerScreen

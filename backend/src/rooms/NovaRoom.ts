@@ -347,9 +347,21 @@ export class NovaRoom extends Room {
         this.broadcast('CARD_DRAWN', { playerId: player.id, count: 1 });
 
         if (isPlayable(card, this.gs as any)) {
-          const chosenColor = card.color === 'wild' ? 'red' : undefined;
-          this.handlePlayCard({ sessionId: player.id } as Client, { cardId: card.id, chosenColor });
-          return; // `handlePlayCard` advances turn and schedules next
+          // For bots, auto-pick a color. For humans, send CHOOSE_COLOR_REQUIRED
+          if (player.type === 'bot') {
+            const chosenColor = card.color === 'wild' ? 'red' : undefined;
+            this.handlePlayCard({ sessionId: player.id } as Client, { cardId: card.id, chosenColor });
+            return;
+          } else if (card.color !== 'wild') {
+            // Non-wild playable — play immediately
+            this.handlePlayCard({ sessionId: player.id } as Client, { cardId: card.id });
+            return;
+          } else {
+            // Wild or wild4 drawn by human — keep in hand, ask client to choose color
+            this.broadcastState();
+            this.broadcast('CHOOSE_COLOR_REQUIRED', { cardId: card.id, playerId: player.id });
+            return;
+          }
         }
       }
     }

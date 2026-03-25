@@ -188,18 +188,41 @@ export function Lobby({ playerName, onNameChange, onCreate, onJoin, isConnecting
           />
         </div>
 
-        {/* Tabs */}
-        <div className="uno-tabs">
-          {(['create', 'join'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`uno-tabs__btn ${tab === t ? 'uno-tabs__btn--active' : ''}`}
-              id={`tab-${t}`}
-            >
-              {t === 'create' ? '✨ Create Room' : '🔗 Join Room'}
-            </button>
-          ))}
+        {/* Mode Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+          <motion.div
+            onClick={() => setTab('create')}
+            whileHover={{ scale: 1.04, y: -4 }}
+            whileTap={{ scale: 0.96 }}
+            style={{
+              background: tab === 'create' ? 'linear-gradient(135deg, #1e8fff, #0052cc)' : 'rgba(255,255,255,0.04)',
+              border: `2px solid ${tab === 'create' ? '#4cc9f0' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 16, padding: '20px 12px', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              boxShadow: tab === 'create' ? '0 8px 24px rgba(30,143,255,0.4)' : 'none',
+              transition: 'all 200ms ease',
+            }}
+          >
+            <div style={{ fontSize: '2rem' }}>✨</div>
+            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: tab === 'create' ? 'white' : 'rgba(255,255,255,0.5)' }}>CREATE ROOM</div>
+          </motion.div>
+          
+          <motion.div
+            onClick={() => setTab('join')}
+            whileHover={{ scale: 1.04, y: -4 }}
+            whileTap={{ scale: 0.96 }}
+            style={{
+              background: tab === 'join' ? 'linear-gradient(135deg, #00d68f, #007a52)' : 'rgba(255,255,255,0.04)',
+              border: `2px solid ${tab === 'join' ? '#80ffcc' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 16, padding: '20px 12px', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              boxShadow: tab === 'join' ? '0 8px 24px rgba(0,214,143,0.4)' : 'none',
+              transition: 'all 200ms ease',
+            }}
+          >
+            <div style={{ fontSize: '2rem' }}>🔗</div>
+            <div style={{ fontWeight: 800, fontSize: '0.9rem', color: tab === 'join' ? 'white' : 'rgba(255,255,255,0.5)' }}>JOIN ROOM</div>
+          </motion.div>
         </div>
 
         <AnimatePresence mode="wait">

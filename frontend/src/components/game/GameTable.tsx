@@ -305,6 +305,16 @@ function PlayerSeat({
         <div className="uno-seat__avatar">
           {emoji}
           {isBot && <div className="uno-seat__bot-badge">BOT</div>}
+          {/* Active turn breathing ring */}
+          {isActive && (
+            <div style={{
+              position: 'absolute', inset: -6,
+              borderRadius: '50%',
+              border: '2px solid rgba(245,200,66,0.7)',
+              animation: 'active-ring-pulse 1.2s ease-in-out infinite',
+              pointerEvents: 'none',
+            }} />
+          )}
         </div>
       </div>
       <span className="uno-seat__name">
@@ -403,11 +413,17 @@ export function GameTable({
   const room = useGameStore(s => s.room);
   useEffect(() => {
     if (!room) return;
-    const unsub = room.onMessage('SAY_NOVA_SOUND', () => {
+    const unsubUno = room.onMessage('SAY_NOVA_SOUND', () => {
        playSound('unoCall');
     });
-    return () => { unsub(); };
-  }, [room, playSound]);
+    // When server tells us to pick a color for a drawn wild card
+    const unsubColor = room.onMessage('CHOOSE_COLOR_REQUIRED', (msg: { cardId: string; playerId: string }) => {
+       if (msg.playerId === myId) {
+         setPendingWild(msg.cardId);
+       }
+    });
+    return () => { unsubUno(); unsubColor(); };
+  }, [room, playSound, myId]);
 
   // ── Play card with animation ──────────────────────────────────────────────
   const handlePlayCardAnimated = useCallback((card: Card) => {
@@ -574,12 +590,47 @@ export function GameTable({
         ))}
       </div>
 
-      {/* ── Center Cluster: Draw Pile, Pending Stack, Discard Pile ─────────── */}
+      {/* ── Center Cluster: Draw Pile, Direction, Pending Stack, Discard Pile ── */}
       <div className="uno-center">
         
         {/* Draw Pile */}
         <div id="deck-root">
            <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
+        </div>
+
+        {/* ── Direction Indicator ─────────────────────────────────────────── */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <motion.div
+            key={gameState.direction}
+            animate={{ rotate: gameState.direction === 'cw' ? [0, 360] : [0, -360] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+            style={{
+              position: 'absolute',
+              width: 'clamp(70px, 12vw, 110px)',
+              height: 'clamp(70px, 12vw, 110px)',
+              borderRadius: '50%',
+              border: '2px dashed rgba(0,214,143,0.3)',
+              zIndex: 0,
+              pointerEvents: 'none',
+            }}
+          />
+          <motion.svg
+            key={`arrow-${gameState.direction}`}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+            width="clamp(40px, 7vw, 64px)" height="clamp(40px, 7vw, 64px)"
+            viewBox="0 0 64 64" fill="none"
+            style={{ zIndex: 1, filter: 'drop-shadow(0 0 8px rgba(0,214,143,0.7))' }}
+          >
+            <circle cx="32" cy="32" r="28" stroke="rgba(0,214,143,0.15)" strokeWidth="4" />
+            <path
+              d={gameState.direction === 'cw'
+                ? 'M 32 12 A 20 20 0 1 1 12 32 M 12 32 L 8 24 M 12 32 L 20 28'
+                : 'M 32 12 A 20 20 0 1 0 12 32 M 12 32 L 8 24 M 12 32 L 20 28'}
+              stroke="#00d68f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"
+            />
+          </motion.svg>
         </div>
 
         {/* Pending Draw Stack (Center Cluster) */}

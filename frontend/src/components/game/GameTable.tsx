@@ -598,39 +598,52 @@ export function GameTable({
            <DrawPile count={gameState.drawPileCount ?? 108} onClick={isMyTurn ? handleDrawCard : undefined} />
         </div>
 
-        {/* ── Direction Indicator ─────────────────────────────────────────── */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* ── Direction Indicator (Polished) ────────────────────────────────── */}
+        <div style={{ position: 'relative', width: 'clamp(64px, 11vw, 96px)', height: 'clamp(64px, 11vw, 96px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Inner track background */}
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            background: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 60%, transparent 70%)',
+            border: '2px solid rgba(255,255,255,0.03)',
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.6)',
+          }} />
+          
+          {/* Glowing Arrow Sweep */}
           <motion.div
-            key={gameState.direction}
-            animate={{ rotate: gameState.direction === 'cw' ? [0, 360] : [0, -360] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-            style={{
-              position: 'absolute',
-              width: 'clamp(70px, 12vw, 110px)',
-              height: 'clamp(70px, 12vw, 110px)',
-              borderRadius: '50%',
-              border: '2px dashed rgba(0,214,143,0.3)',
-              zIndex: 0,
-              pointerEvents: 'none',
+            key={`direction-${gameState.direction}`}
+            animate={{ rotate: gameState.direction === 'cw' ? [0, 360] : [360, 0] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
+            style={{ 
+              position: 'absolute', inset: -4, borderRadius: '50%',
+              // The comet tail uses conic gradient
+              background: gameState.direction === 'cw'
+                ? 'conic-gradient(from 0deg, transparent 0%, transparent 65%, rgba(0,214,143,0.1) 85%, rgba(0,214,143,0.8) 98%, #00d68f 100%)'
+                : 'conic-gradient(from 0deg, #00d68f 0%, rgba(0,214,143,0.8) 2%, rgba(0,214,143,0.1) 15%, transparent 35%, transparent 100%)',
+              WebkitMask: 'radial-gradient(transparent 60%, black 61%)',
+              mask: 'radial-gradient(transparent 60%, black 61%)',
+              filter: 'drop-shadow(0 0 8px rgba(0,214,143,0.6))',
             }}
           />
-          <motion.svg
-            key={`arrow-${gameState.direction}`}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-            width="clamp(40px, 7vw, 64px)" height="clamp(40px, 7vw, 64px)"
-            viewBox="0 0 64 64" fill="none"
-            style={{ zIndex: 1, filter: 'drop-shadow(0 0 8px rgba(0,214,143,0.7))' }}
+
+          {/* Indicator Head Dot */}
+          <motion.div
+            animate={{ rotate: gameState.direction === 'cw' ? [0, 360] : [360, 0] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
+            style={{ position: 'absolute', inset: -4 }}
           >
-            <circle cx="32" cy="32" r="28" stroke="rgba(0,214,143,0.15)" strokeWidth="4" />
-            <path
-              d={gameState.direction === 'cw'
-                ? 'M 32 12 A 20 20 0 1 1 12 32 M 12 32 L 8 24 M 12 32 L 20 28'
-                : 'M 32 12 A 20 20 0 1 0 12 32 M 12 32 L 8 24 M 12 32 L 20 28'}
-              stroke="#00d68f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"
-            />
-          </motion.svg>
+             <div style={{
+               position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+               width: 10, height: 10, borderRadius: '50%', background: '#fff',
+               boxShadow: '0 0 16px 4px #00d68f, 0 0 32px 8px #00d68f',
+             }} />
+          </motion.div>
+
+          {/* Center visual anchor */}
+          <div style={{
+            width: 14, height: 14, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0,214,143,0.8) 0%, rgba(0,214,143,0.2) 60%, transparent 100%)',
+            boxShadow: '0 0 10px rgba(0,214,143,0.4)'
+          }} />
         </div>
 
         {/* Pending Draw Stack (Center Cluster) */}
